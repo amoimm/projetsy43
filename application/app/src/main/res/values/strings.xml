@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">application</string>
+    <string name="welcome_hello">Hello !</string>
+    <string name="welcome_lets_go">Let\'s go</string>
+    <string name="personal_info_title">Informations personnelles</string>
+    <string name="personal_info_name">Nom</string>
+    <string name="personal_info_age">Âge</string>
+    <string name="personal_info_weight">Poids (kg)</string>
+    <string name="personal_info_height">Taille (cm)</string>
+    <string name="personal_info_validate">Valider</string>
 </resources>
