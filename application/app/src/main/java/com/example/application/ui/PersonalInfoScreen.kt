@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,16 +32,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
 import com.example.application.ui.theme.ApplicationTheme
+import com.example.application.UserProfile
 
 @Composable
 fun PersonalInfoScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit = {}
+    initialName: String = "",
+    initialAge: String = "",
+    initialWeight: String = "",
+    initialHeight: String = "",
+    onValidateClick: (UserProfile) -> Unit = {}
 ) {
-    var name by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
+    var age by remember { mutableStateOf(initialAge) }
+    var weight by remember { mutableStateOf(initialWeight) }
+    var height by remember { mutableStateOf(initialHeight) }
+
+    // if change -> update on screen
+    LaunchedEffect(initialName, initialAge, initialWeight, initialHeight) {
+        if (name.isEmpty()) name = initialName
+        if (age.isEmpty()) age = initialAge
+        if (weight.isEmpty()) weight = initialWeight
+        if (height.isEmpty()) height = initialHeight
+    }
 
     Box(
         modifier = modifier
@@ -96,7 +110,10 @@ fun PersonalInfoScreen(
         }
 
         Button(
-            onClick = onValidateClick,
+            onClick = {
+                val profil = UserProfile(name, age, weight, height)
+                onValidateClick(profil)
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black

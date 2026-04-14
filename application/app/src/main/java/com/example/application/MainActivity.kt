@@ -7,22 +7,30 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         enableEdgeToEdge()
         setContent {
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
+                val coroutineScope = rememberCoroutineScope()
+                
+                // On écoute le flux de données (Pas besoin d'import car dans le même package)
+                val userProfile by userProfileFlow.collectAsState(initial = UserProfile())
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
@@ -32,7 +40,16 @@ class MainActivity : ComponentActivity() {
                         )
                         "personal_info" -> PersonalInfoScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { /* Handle validation */ }
+                            initialName = userProfile.name,
+                            initialAge = userProfile.age,
+                            initialWeight = userProfile.weight,
+                            initialHeight = userProfile.height,
+                            // Save, via coroutine
+                            onValidateClick = { profile ->
+                                coroutineScope.launch {
+                                    saveUserProfile(profile)
+                                }
+                            }
                         )
                     }
                 }
