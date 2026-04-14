@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
                         )
                         "capacite_info" -> CapaciteScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen="Build_ToDo_List" }
+                            onValidateClick = { currentScreen="HowYouFeel" }
                         )
                         "HowYouFeel" -> HowYouFeelScreen(
                             modifier = Modifier.padding(innerPadding),
