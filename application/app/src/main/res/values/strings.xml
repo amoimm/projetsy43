@@ -10,5 +10,6 @@
     <string name="validate">Validate</string>
     <string name="how_you_feel_title">How Do You Feel ?</string>
     <string name="how_you_feel_description">Please indicate how motivated you feel today</string>
-
+    <string name="how_you_feel_high">High</string>
+    <string name="how_you_feel_low">Low</string>
 </resources>

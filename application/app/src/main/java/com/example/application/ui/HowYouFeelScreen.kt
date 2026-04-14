@@ -74,10 +74,27 @@ fun HowYouFeelScreen(
             Spacer(modifier = Modifier.height(50.dp))
 
             Text(
-                text = stringResource(id = R.string.how_you_feel_description),
+                text = stringResource(id = R.string.how_you_feel_high),
                 modifier = Modifier.fillMaxWidth(),
                 color = Color.Gray,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "50 %",
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                fontSize = 28.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(id = R.string.how_you_feel_low),
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.Gray,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
