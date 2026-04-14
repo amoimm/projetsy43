@@ -126,7 +126,7 @@ fun PersonalInfoScreen(
                 .height(56.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.personal_info_validate),
+                text = stringResource(id = R.string.validate),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -136,11 +136,11 @@ fun PersonalInfoScreen(
 
 @Composable
 fun InfoInputField(
+    modifier: Modifier = Modifier,
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    modifier: Modifier = Modifier
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(

@@ -14,6 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.example.application.ui.CapaciteScreen
+import com.example.application.ui.PersonalInfoScreen
+//import com.example.application.ui.BuildToDoListScreen
+import com.example.application.ui.HowYouFeelScreen
+import com.example.application.ui.BuildToDoListScreen
+import com.example.application.ui.CapaciteScreen
+import com.example.application.ui.HowYouFeelScreen
 import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
@@ -50,7 +57,22 @@ class MainActivity : ComponentActivity() {
                                     saveUserProfile(profile)
                                 }
                             }
+                            onValidateClick = { currentScreen = "capacite_info" }
                         )
+                        "capacite_info" -> CapaciteScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onValidateClick = { currentScreen="HowYouFeel" }
+                        )
+                        "HowYouFeel" -> HowYouFeelScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onValidateClick = { currentScreen="Build_ToDo_List" }
+                        )
+                        "Build_ToDo_List" -> BuildToDoListScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onValidateClick = { currentScreen = "HowYouFeel" }
+                        )
+
+
                     }
                 }
             }
