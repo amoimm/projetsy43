@@ -12,4 +12,7 @@
     <string name="how_you_feel_description">Please indicate how motivated you feel today</string>
     <string name="how_you_feel_high">High</string>
     <string name="how_you_feel_low">Low</string>
+    <string name="capacity_info_title">Your physical capacities</string>
+    <string name="capacity_info_pompes">Number of push-ups</string>
+    <string name="capacity_info_courses">Running</string>
 </resources>
