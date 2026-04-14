@@ -16,6 +16,10 @@ import com.example.application.ui.CapaciteScreen
 import com.example.application.ui.PersonalInfoScreen
 //import com.example.application.ui.BuildToDoListScreen
 import com.example.application.ui.HowYouFeelScreen
+import com.example.application.ui.BuildToDoListScreen
+import com.example.application.ui.CapaciteScreen
+import com.example.application.ui.HowYouFeelScreen
+import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
 
@@ -39,16 +43,16 @@ class MainActivity : ComponentActivity() {
                         )
                         "capacite_info" -> CapaciteScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen="HowYouFeel" }
+                            onValidateClick = { currentScreen="Build_ToDo_List" }
                         )
                         "HowYouFeel" -> HowYouFeelScreen(
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { currentScreen="Build_ToDo_List" }
-                        )/*
-                        "Build_ToDo_List" -> BuildToDoListScreen)(
+                        )
+                        "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { /* Handle validation */ }
-                        )*/
+                            onValidateClick = { currentScreen = "HowYouFeel" }
+                        )
 
 
                     }
