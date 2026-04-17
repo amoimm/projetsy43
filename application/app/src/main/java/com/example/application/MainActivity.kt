@@ -16,12 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.application.ui.CapaciteScreen
 import com.example.application.ui.PersonalInfoScreen
-//import com.example.application.ui.BuildToDoListScreen
 import com.example.application.ui.HowYouFeelScreen
 import com.example.application.ui.BuildToDoListScreen
-import com.example.application.ui.CapaciteScreen
-import com.example.application.ui.HowYouFeelScreen
-import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
@@ -51,13 +47,12 @@ class MainActivity : ComponentActivity() {
                             initialAge = userProfile.age,
                             initialWeight = userProfile.weight,
                             initialHeight = userProfile.height,
-                            // Save, via coroutine
                             onValidateClick = { profile ->
                                 coroutineScope.launch {
                                     saveUserProfile(profile)
                                 }
+                                currentScreen = "capacite_info"
                             }
-                            onValidateClick = { currentScreen = "capacite_info" }
                         )
                         "capacite_info" -> CapaciteScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -71,8 +66,6 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { currentScreen = "HowYouFeel" }
                         )
-
-
                     }
                 }
             }
