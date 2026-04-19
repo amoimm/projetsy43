@@ -56,7 +56,7 @@ fun ToDoItem(
                 HorizontalDivider(color = Color(0xFF333333))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Détails de la tâche : $task",
+                    text = "$task",
                     color = Color(0xFFB0B0B0),
                     fontSize = 14.sp
                 )
