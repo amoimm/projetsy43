@@ -18,6 +18,7 @@ import com.example.application.ui.CapaciteScreen
 import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.HowYouFeelScreen
 import com.example.application.ui.BuildToDoListScreen
+import com.example.application.ui.MainScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
@@ -47,9 +48,9 @@ class MainActivity : ComponentActivity() {
                             initialAge = userProfile.age,
                             initialWeight = userProfile.weight,
                             initialHeight = userProfile.height,
-                            onValidateClick = { profile ->
+                            onValidateClick = { profil ->
                                 coroutineScope.launch {
-                                    saveUserProfile(profile)
+                                    saveUserProfile(profil)
                                 }
                                 currentScreen = "capacite_info"
                             }
@@ -60,11 +61,15 @@ class MainActivity : ComponentActivity() {
                         )
                         "HowYouFeel" -> HowYouFeelScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen="Build_ToDo_List" }
+                            onValidateClick = { currentScreen="Main" }
                         )
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen = "HowYouFeel" }
+                            onValidateClick = { currentScreen = "Main" }
+                        )
+                        "Main" -> MainScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onValidateClick = { currentScreen="Build_ToDo_List" }
                         )
                     }
                 }
