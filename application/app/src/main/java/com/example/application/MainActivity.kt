@@ -69,8 +69,10 @@ class MainActivity : ComponentActivity() {
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen="Build_ToDo_List" }
-                        )
+                            onValidateClick = { location ->
+                                currentScreen= location
+                            }
+                        );
                     }
                 }
             }

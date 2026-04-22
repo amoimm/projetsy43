@@ -1,5 +1,6 @@
 package com.example.application.ui
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -8,9 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.jvm.java
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 
 
 @Composable
@@ -18,6 +23,7 @@ fun ToDoItem(
     task: String,
     isExpanded: Boolean,
     onExpandClick: () -> Unit,
+    onPlayClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -48,8 +54,20 @@ fun ToDoItem(
                         fontSize = 13.sp
                     )
                 }
+                Button(
+                    onClick = onPlayClick,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.size(48.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Start",
+                        tint = Color.White
+                    )
+                }
             }
-
 
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -70,7 +88,7 @@ fun ToDoItem(
 fun ToDoScreen(
     modifier: Modifier = Modifier,
     tasks: List<String> = List(12) { "Task ${it + 1}" },
-    onValidateClick: () -> Unit = {}
+    onValidateClick: (String) -> Unit = {}
 ) {
     val expandedIndices = remember { mutableStateListOf<Int>() }
 
@@ -101,7 +119,8 @@ fun ToDoScreen(
                             } else {
                                 expandedIndices.add(index)
                             }
-                        }
+                        },
+                        onPlayClick = { onValidateClick(task + "Screen") }
                     )
                 }
             }
@@ -121,7 +140,7 @@ fun ToDoScreen(
                 }
 
                 Button(
-                    onClick = onValidateClick,
+                    onClick = { onValidateClick("Build_ToDo_List") },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
                 ) {
@@ -136,10 +155,12 @@ fun ToDoScreen(
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit = {}
+    onValidateClick: (String) -> Unit = {}
 ) {
+    val tasks = listOf("pushup", "running")
     ToDoScreen(
         modifier = modifier,
+        tasks = tasks,
         onValidateClick = onValidateClick
     )
 }
