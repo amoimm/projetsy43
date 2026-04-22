@@ -22,6 +22,7 @@ import com.example.application.ui.MainScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
+import com.example.application.ui.ActiviteSportive
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +33,8 @@ class MainActivity : ComponentActivity() {
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
                 val coroutineScope = rememberCoroutineScope()
-                
+                var ActivityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
+
                 // On écoute le flux de données (Pas besoin d'import car dans le même package)
                 val userProfile by userProfileFlow.collectAsState(initial = UserProfile())
 
@@ -65,10 +67,14 @@ class MainActivity : ComponentActivity() {
                         )
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen = "Main" }
+                            onValidateClick = { NewList ->
+                                ActivityList = NewList
+                                currentScreen = "Main"
+                            }
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
+                            activities = ActivityList,
                             onValidateClick = { location ->
                                 currentScreen= location
                             }

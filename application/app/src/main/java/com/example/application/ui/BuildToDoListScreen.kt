@@ -25,7 +25,7 @@ data class ActiviteSportive(val id: Int, val categorie: String, val valeur: Stri
 @Composable
 fun BuildToDoListScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit
+    onValidateClick: (List<ActiviteSportive>) -> Unit
 ) {
     var listeActivites by remember { mutableStateOf(listOf<ActiviteSportive>()) }
     var categorieSelectionnee by remember { mutableStateOf("Push up") }
@@ -163,7 +163,7 @@ fun BuildToDoListScreen(
         }
 
         Button(
-            onClick = onValidateClick,
+            onClick = { onValidateClick(listeActivites) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black

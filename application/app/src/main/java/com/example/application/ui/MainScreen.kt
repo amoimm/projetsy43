@@ -20,12 +20,13 @@ import androidx.compose.material.icons.filled.PlayArrow
 
 @Composable
 fun ToDoItem(
-    task: String,
+    activity: ActiviteSportive,
     isExpanded: Boolean,
     onExpandClick: () -> Unit,
     onPlayClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val suffixe = if (activity.categorie == "Running") "km" else "reps"
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -42,7 +43,7 @@ fun ToDoItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = task,
+                    text = "${activity.categorie}",
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
@@ -74,7 +75,7 @@ fun ToDoItem(
                 HorizontalDivider(color = Color(0xFF333333))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "$task",
+                    text = "Détails de l'activité : ${activity.categorie} \n Goal : ${activity.valeur} $suffixe",
                     color = Color(0xFFB0B0B0),
                     fontSize = 14.sp
                 )
@@ -87,7 +88,7 @@ fun ToDoItem(
 @Composable
 fun ToDoScreen(
     modifier: Modifier = Modifier,
-    tasks: List<String> = List(12) { "Task ${it + 1}" },
+    activities: List<ActiviteSportive> = emptyList(),
     onValidateClick: (String) -> Unit = {}
 ) {
     val expandedIndices = remember { mutableStateListOf<Int>() }
@@ -109,9 +110,9 @@ fun ToDoScreen(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                itemsIndexed(tasks) { index, task ->
+                itemsIndexed(activities) { index, activity ->
                     ToDoItem(
-                        task = task,
+                        activity = activity,
                         isExpanded = expandedIndices.contains(index),
                         onExpandClick = {
                             if (expandedIndices.contains(index)) {
@@ -120,7 +121,7 @@ fun ToDoScreen(
                                 expandedIndices.add(index)
                             }
                         },
-                        onPlayClick = { onValidateClick(task + "Screen") }
+                        onPlayClick = { onValidateClick(activity.categorie + "Screen") }
                     )
                 }
             }
@@ -155,12 +156,12 @@ fun ToDoScreen(
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
+    activities: List<ActiviteSportive> = emptyList(),
     onValidateClick: (String) -> Unit = {}
 ) {
-    val tasks = listOf("pushup", "running")
     ToDoScreen(
         modifier = modifier,
-        tasks = tasks,
+        activities = activities,
         onValidateClick = onValidateClick
     )
 }
