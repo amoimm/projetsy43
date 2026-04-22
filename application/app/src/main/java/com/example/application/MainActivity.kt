@@ -19,6 +19,8 @@ import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.HowYouFeelScreen
 import com.example.application.ui.BuildToDoListScreen
 import com.example.application.ui.MainScreen
+import com.example.application.ui.PushupScreen
+import com.example.application.ui.RunningScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
@@ -72,7 +74,16 @@ class MainActivity : ComponentActivity() {
                             onValidateClick = { location ->
                                 currentScreen= location
                             }
-                        );
+                        )
+                        "pushupScreen" -> PushupScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onContinueClick = { currentScreen = "Main" }
+                        )
+
+                        "runningScreen" -> RunningScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onContinueClick = { currentScreen = "Main" }
+                        )
                     }
                 }
             }
