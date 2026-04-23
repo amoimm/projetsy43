@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,13 +31,13 @@ import com.example.application.R
 import com.example.application.ui.theme.ApplicationTheme
 
 @Composable
-fun CapaciteScreen(
+fun PartnerInfoScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit = {}
+    onValidateClick: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
-
-    var pompes by remember { mutableStateOf("") }
-    var courseKm by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var company by remember { mutableStateOf("") }
 
     Box(
         modifier = modifier
@@ -46,11 +46,10 @@ fun CapaciteScreen(
             .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = stringResource(id = R.string.capacity_info_title),
+                text = stringResource(id = R.string.partner_info_title),
                 color = Color.White,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
@@ -58,25 +57,31 @@ fun CapaciteScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            InfoInputField(
-                label = stringResource(id = R.string.capacity_info_pompes) + " (Max)",
-                value = pompes,
-                onValueChange = { pompes = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            PartnerInputField(
+                label = stringResource(id = R.string.partner_info_lastname),
+                value = lastName,
+                onValueChange = { lastName = it }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            InfoInputField(
-                label = stringResource(id = R.string.capacity_info_courses) + " (km Max)",
-                value = courseKm,
-                onValueChange = { courseKm = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            PartnerInputField(
+                label = stringResource(id = R.string.partner_info_firstname),
+                value = firstName,
+                onValueChange = { firstName = it }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            PartnerInputField(
+                label = stringResource(id = R.string.partner_info_company),
+                value = company,
+                onValueChange = { company = it }
             )
         }
 
         Button(
-            onClick = onValidateClick,
+            onClick = { onValidateClick(lastName, firstName, company) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black
@@ -97,10 +102,45 @@ fun CapaciteScreen(
     }
 }
 
+@Composable
+fun PartnerInputField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            color = Color(0xFF9E9E9E),
+            fontSize = 16.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedContainerColor = Color(0xFF12162B),
+                unfocusedContainerColor = Color(0xFF12162B),
+                cursorColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
-private fun CapaciteScreenPreview() {
+private fun PartnerInfoScreenPreview() {
     ApplicationTheme {
-        CapaciteScreen()
+        PartnerInfoScreen()
     }
 }

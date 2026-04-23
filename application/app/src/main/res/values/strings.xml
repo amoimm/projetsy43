@@ -2,19 +2,29 @@
     <string name="app_name">application</string>
     <string name="welcome_hello">Hello !</string>
     <string name="welcome_lets_go">Let\'s go</string>
-    <string name="personal_info_title">Personal Information</string>
-    <string name="personal_info_name">Name</string>
-    <string name="personal_info_age">Age</string>
-    <string name="personal_info_weight">Weight (kg)</string>
-    <string name="personal_info_height">Height (cm)</string>
-    <string name="validate">Validate</string>
+    <string name="personal_info_title">Informations personnelles</string>
+    <string name="personal_info_name">Nom</string>
+    <string name="personal_info_age">Âge</string>
+    <string name="personal_info_weight">Poids (kg)</string>
+    <string name="personal_info_height">Taille (cm)</string>
+    <string name="personal_info_validate">Valider</string>
+
+    <string name="mode_selection_title">Choisissez votre mode</string>
+    <string name="mode_user">Mode Utilisateur</string>
+    <string name="mode_partner">Mode Partenaire</string>
+
+    <string name="partner_info_title">Informations Partenaire</string>
+    <string name="partner_info_lastname">Nom</string>
+    <string name="partner_info_firstname">Prénom</string>
+    <string name="partner_info_company">Entreprise</string>
+
+    <string name="capacity_info_title">Your physical capacities</string>
+    <string name="capacity_info_pompes">Number of push-ups</string>
+    <string name="capacity_info_courses">Running</string>
     <string name="how_you_feel_title">How Do You Feel ?</string>
     <string name="how_you_feel_description">Please indicate how motivated you feel today</string>
     <string name="how_you_feel_high">High</string>
     <string name="how_you_feel_low">Low</string>
-    <string name="capacity_info_title">Your physical capacities</string>
-    <string name="capacity_info_pompes">Number of push-ups</string>
-    <string name="capacity_info_courses">Running</string>
     <string name="pushup_done">Number of  pushups done :</string>
     <string name="add_pushup">Add pushup manually</string>
     <string name="finish_session">Finish session</string>

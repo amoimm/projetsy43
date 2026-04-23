@@ -22,6 +22,8 @@ import com.example.application.ui.MainScreen
 import com.example.application.ui.PushupScreen
 import com.example.application.ui.RunningScreen
 import com.example.application.ui.WelcomeScreen
+import com.example.application.ui.ModeSelectionScreen
+import com.example.application.ui.PartnerInfoScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
 import com.example.application.ui.ActiviteSportive
@@ -37,14 +39,24 @@ class MainActivity : ComponentActivity() {
                 val coroutineScope = rememberCoroutineScope()
                 var ActivityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
 
-                // On écoute le flux de données (Pas besoin d'import car dans le même package)
                 val userProfile by userProfileFlow.collectAsState(initial = UserProfile())
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         "welcome" -> WelcomeScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { currentScreen = "personal_info" }
+                            onContinueClick = { currentScreen = "mode_selection" }
+                        )
+                        "mode_selection" -> ModeSelectionScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onUserModeSelected = { currentScreen = "personal_info" },
+                            onPartnerModeSelected = { currentScreen = "partner_info" }
+                        )
+                        "partner_info" -> PartnerInfoScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onValidateClick = { nom, prenom, entreprise ->
+                                currentScreen = "welcome"
+                            }
                         )
                         "personal_info" -> PersonalInfoScreen(
                             modifier = Modifier.padding(innerPadding),

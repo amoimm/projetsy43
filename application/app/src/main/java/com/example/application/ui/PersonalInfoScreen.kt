@@ -126,7 +126,7 @@ fun PersonalInfoScreen(
                 .height(56.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.validate),
+                text = stringResource(id = R.string.personal_info_validate),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )

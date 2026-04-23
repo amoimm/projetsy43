@@ -32,7 +32,7 @@ fun BuildToDoListScreen(
     var valeurSaisie by remember { mutableStateOf("") }
     var compteurId by remember { mutableIntStateOf(0) }
 
-    // Nouveaux états pour la gestion de la date
+
     var dateSelectionnee by remember { mutableStateOf("Select a date") }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -84,7 +84,7 @@ fun BuildToDoListScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
-                    // NOUVEAU : Section pour la date
+                    // Section pour la date
                     Text("Due Date :", fontWeight = FontWeight.SemiBold, color = Color.Black)
                     OutlinedButton(
                         onClick = { showDatePicker = true },
