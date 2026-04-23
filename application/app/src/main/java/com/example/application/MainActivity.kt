@@ -78,18 +78,25 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             activities = ActivityList,
                             onValidateClick = { location ->
-                                currentScreen= location
+                                currentScreen = location
                             }
                         )
-                        "pushupScreen" -> PushupScreen(
+                        "Push upScreen" -> PushupScreen(
                             modifier = Modifier.padding(innerPadding),
                             onContinueClick = { currentScreen = "Main" }
                         )
 
-                        "runningScreen" -> RunningScreen(
+                        "RunningScreen" -> RunningScreen(
                             modifier = Modifier.padding(innerPadding),
                             onContinueClick = { currentScreen = "Main" }
                         )
+                        else -> {
+                            MainScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                activities = ActivityList,
+                                onValidateClick = { location -> currentScreen = location }
+                            )
+                        }
                     }
                 }
             }
