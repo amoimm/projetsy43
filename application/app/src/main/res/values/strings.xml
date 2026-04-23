@@ -15,4 +15,9 @@
     <string name="capacity_info_title">Your physical capacities</string>
     <string name="capacity_info_pompes">Number of push-ups</string>
     <string name="capacity_info_courses">Running</string>
+    <string name="pushup_done">Number of  pushups done :</string>
+    <string name="add_pushup">Add pushup manually</string>
+    <string name="finish_session">Finish session</string>
+    <string name="running_done">Distance travelled :</string>
+    <string name="add_running">Add distance manually</string>
 </resources>

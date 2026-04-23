@@ -5,11 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.application"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.application"
@@ -48,6 +44,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
     testImplementation(libs.junit)
