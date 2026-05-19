@@ -19,25 +19,38 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-data class ActiviteSportive(val id: Int, val categorie: String, val valeur: String)
+data class ActiviteSportive(
+    val id: Int, 
+    val categorie: String, 
+    val valeur: String,
+    var isDone: Boolean = false
+)
+
+data class ToDoList(
+    val id: Int,
+    val title: String,
+    val date: String,
+    val activities: List<ActiviteSportive>
+) {
+    val isCompleted: Boolean get() = activities.isNotEmpty() && activities.all { it.isDone }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuildToDoListScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: (List<ActiviteSportive>) -> Unit
+    onValidateClick: (ToDoList) -> Unit
 ) {
+    var titleSaisie by remember { mutableStateOf("") }
     var listeActivites by remember { mutableStateOf(listOf<ActiviteSportive>()) }
     var categorieSelectionnee by remember { mutableStateOf("Push up") }
     var valeurSaisie by remember { mutableStateOf("") }
     var compteurId by remember { mutableIntStateOf(0) }
 
-
     var dateSelectionnee by remember { mutableStateOf("Select a date") }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
-    // Le dialogue qui s'ouvre au clic pour choisir la date
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -45,7 +58,6 @@ fun BuildToDoListScreen(
                 TextButton(onClick = {
                     val selectedMillis = datePickerState.selectedDateMillis
                     if (selectedMillis != null) {
-                        // Formater la date en jj/MM/aaaa
                         val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                         dateSelectionnee = formatter.format(Date(selectedMillis))
                     }
@@ -71,7 +83,7 @@ fun BuildToDoListScreen(
                 .padding(24.dp)
         ) {
             Text(
-                text = "My to-do List",
+                text = "Create To-Do List",
                 color = Color.White,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
@@ -80,29 +92,42 @@ fun BuildToDoListScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    OutlinedTextField(
+                        value = titleSaisie,
+                        onValueChange = { titleSaisie = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("List Title", color = Color.Gray) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF1565C0),
+                            unfocusedBorderColor = Color.Gray
+                        ),
+                        singleLine = true
+                    )
 
-                    // Section pour la date
-                    Text("Due Date :", fontWeight = FontWeight.SemiBold, color = Color.Black)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Due Date :", fontWeight = FontWeight.SemiBold, color = Color.White)
                     OutlinedButton(
                         onClick = { showDatePicker = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
+                            containerColor = Color(0xFF2C2C2C),
+                            contentColor = Color.White
                         )
                     ) {
                         Text(text = dateSelectionnee)
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Section Catégorie (décalée vers le bas)
-                    Text("Category :", fontWeight = FontWeight.SemiBold, color = Color.Black)
+                    Text("Add Activity :", fontWeight = FontWeight.SemiBold, color = Color.White)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -112,14 +137,16 @@ fun BuildToDoListScreen(
                         Button(
                             onClick = { categorieSelectionnee = "Push up" },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (categorieSelectionnee == "Push up") MaterialTheme.colorScheme.primary else Color.Gray
-                            )
+                                containerColor = if (categorieSelectionnee == "Push up") Color(0xFF1565C0) else Color.Gray
+                            ),
+                            modifier = Modifier.weight(1f)
                         ) { Text("Push up", color = Color.White) }
                         Button(
                             onClick = { categorieSelectionnee = "Running" },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (categorieSelectionnee == "Running") MaterialTheme.colorScheme.primary else Color.Gray
-                            )
+                                containerColor = if (categorieSelectionnee == "Running") Color(0xFF1565C0) else Color.Gray
+                            ),
+                            modifier = Modifier.weight(1f)
                         ) { Text("Running", color = Color.White) }
                     }
 
@@ -127,7 +154,13 @@ fun BuildToDoListScreen(
                         value = valeurSaisie,
                         onValueChange = { valeurSaisie = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Value (rep or km)") },
+                        label = { Text("Goal (reps or km)", color = Color.Gray) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF1565C0),
+                            unfocusedBorderColor = Color.Gray
+                        ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
@@ -141,9 +174,10 @@ fun BuildToDoListScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
+                            .padding(top = 16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
                     ) {
-                        Text("Add to the list")
+                        Text("Add to current list")
                     }
                 }
             }
@@ -163,7 +197,11 @@ fun BuildToDoListScreen(
         }
 
         Button(
-            onClick = { onValidateClick(listeActivites) },
+            onClick = { 
+                if (titleSaisie.isNotBlank() && listeActivites.isNotEmpty()) {
+                    onValidateClick(ToDoList(0, titleSaisie, dateSelectionnee, listeActivites)) 
+                }
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black
@@ -185,7 +223,7 @@ fun ActiviteItem(activite: ActiviteSportive) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
     ) {
         Row(
             modifier = Modifier
@@ -194,10 +232,10 @@ fun ActiviteItem(activite: ActiviteSportive) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = activite.categorie, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
+            Text(text = activite.categorie, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
 
             val suffixe = if (activite.categorie == "Running") "km" else "reps"
-            Text(text = "${activite.valeur} $suffixe", fontSize = 18.sp, color = Color.DarkGray)
+            Text(text = "${activite.valeur} $suffixe", fontSize = 18.sp, color = Color.LightGray)
         }
     }
 }
