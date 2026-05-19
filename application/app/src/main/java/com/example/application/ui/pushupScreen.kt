@@ -37,7 +37,7 @@ fun PushupScreen(
 ) {
     var count by remember { mutableStateOf(initialCount) }
     // Use of a variable to adapt the font size
-    var fontSize by remember(count) { mutableStateOf(256.sp) }
+    var fontChange by remember(count) { mutableStateOf(256.sp) }
 
     Box(
         modifier = modifier
@@ -60,14 +60,14 @@ fun PushupScreen(
             Text(
                 text = count.toString(),
                 color = Color.White,
-                fontSize = fontSize,
+                fontSize = fontChange,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 softWrap = false,
                 onTextLayout = { textLayoutResult ->
                     //reduce the font size of the text exceed one line
                     if (textLayoutResult.hasVisualOverflow) {
-                        fontSize = (fontSize.value * 0.9f).sp
+                        fontChange = (fontChange.value * 0.9f).sp
                     }
                 }
             )
