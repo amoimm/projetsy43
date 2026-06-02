@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -22,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.privacysandbox.tools.core.generator.build
 import com.example.application.ui.CapaciteScreen
 import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.HowYouFeelScreen
@@ -35,9 +37,19 @@ import com.example.application.ui.PartnerInfoScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
 import com.example.application.ui.ActiviteSportive
-import com.example.application.ui.ToDoList
+//bdd
+import com.example.application.ui.bdd.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.room.Room
 
 class MainActivity : ComponentActivity() {
+
+    private val taskViewModel: TaskViewModel by viewModels {
+        val database = Room.databaseBuilder(applicationContext, TaskDatabase::class.java, "task_db").build()
+        val repository = TaskRepository(database.taskDao())
+        TaskViewModelFactory(repository)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -74,9 +86,7 @@ class MainActivity : ComponentActivity() {
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
                 var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-                var toDoLists by remember { mutableStateOf(listOf<ToDoList>()) }
-                
-                // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
+                val toDoLists by taskViewModel.allToDoLists.observeAsState(initial = emptyList())
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
                 var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -121,16 +131,13 @@ class MainActivity : ComponentActivity() {
                             onValidateClick = { currentScreen="Main" }
                         )
                         "Build_ToDo_List" -> BuildToDoListScreen(
-                            modifier = Modifier.padding(innerPadding),
                             onValidateClick = { newList ->
-                                activityList = newList.activities
-                                toDoLists = toDoLists + newList.copy(id = toDoLists.size)
+                                taskViewModel.insertToDoList(newList)
                                 currentScreen = "Main"
                             }
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            activities = activityList,
                             toDoLists = toDoLists,
                             onValidateClick = { location ->
                                 if (location.contains("|")) {
@@ -145,43 +152,20 @@ class MainActivity : ComponentActivity() {
                         )
                         "Push upScreen" -> PushupScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { 
-                                coroutineScope.launch { context.markExerciseDone() }
-                                // Marquer l'activité comme terminée
-                                if (activeListIndex != null && activeActivityIndex != null) {
-                                    toDoLists = toDoLists.mapIndexed { lIdx, list ->
-                                        if (lIdx == activeListIndex) {
-                                            list.copy(activities = list.activities.mapIndexed { aIdx, act ->
-                                                if (aIdx == activeActivityIndex) act.copy(isDone = true) else act
-                                            })
-                                        } else list
-                                    }
-                                }
+                            onContinueClick = {
                                 currentScreen = "Main" 
                             }
                         )
 
                         "runningScreen" -> RunningScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { 
-                                coroutineScope.launch { context.markExerciseDone() }
-                                // Marquer l'activité comme terminée
-                                if (activeListIndex != null && activeActivityIndex != null) {
-                                    toDoLists = toDoLists.mapIndexed { lIdx, list ->
-                                        if (lIdx == activeListIndex) {
-                                            list.copy(activities = list.activities.mapIndexed { aIdx, act ->
-                                                if (aIdx == activeActivityIndex) act.copy(isDone = true) else act
-                                            })
-                                        } else list
-                                    }
-                                }
+                            onContinueClick = {
                                 currentScreen = "Main" 
                             }
                         )
                         else -> {
                             MainScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                activities = activityList,
                                 toDoLists = toDoLists,
                                 onValidateClick = { location -> currentScreen = location }
                             )
