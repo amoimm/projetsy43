@@ -1,12 +1,18 @@
 package com.example.application
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.example.application.ui.CapaciteScreen
 import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.HowYouFeelScreen
@@ -34,10 +42,37 @@ class MainActivity : ComponentActivity() {
         
         enableEdgeToEdge()
         setContent {
+            val context = LocalContext.current
+            val coroutineScope = rememberCoroutineScope()
+            
+            // Notification Permission Handling
+            val launcher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted ->
+                if (isGranted) {
+                    NotificationScheduler.scheduleDailyReminder(context)
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        NotificationScheduler.scheduleDailyReminder(context)
+                    }
+                } else {
+                    NotificationScheduler.scheduleDailyReminder(context)
+                }
+            }
+
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
-                val coroutineScope = rememberCoroutineScope()
-                var ActivityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
+                var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
 
                 val userProfile by userProfileFlow.collectAsState(initial = UserProfile())
 
@@ -54,7 +89,7 @@ class MainActivity : ComponentActivity() {
                         )
                         "partner_info" -> PartnerInfoScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { nom, prenom, entreprise ->
+                            onValidateClick = { _, _, _ ->
                                 currentScreen = "welcome"
                             }
                         )
@@ -81,31 +116,37 @@ class MainActivity : ComponentActivity() {
                         )
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { NewList ->
-                                ActivityList = NewList
+                            onValidateClick = { newList ->
+                                activityList = newList
                                 currentScreen = "Main"
                             }
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            activities = ActivityList,
+                            activities = activityList,
                             onValidateClick = { location ->
                                 currentScreen = location
                             }
                         )
                         "Push upScreen" -> PushupScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { currentScreen = "Main" }
+                            onContinueClick = { 
+                                coroutineScope.launch { context.markExerciseDone() }
+                                currentScreen = "Main" 
+                            }
                         )
 
-                        "RunningScreen" -> RunningScreen(
+                        "runningScreen" -> RunningScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { currentScreen = "Main" }
+                            onContinueClick = { 
+                                coroutineScope.launch { context.markExerciseDone() }
+                                currentScreen = "Main" 
+                            }
                         )
                         else -> {
                             MainScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                activities = ActivityList,
+                                activities = activityList,
                                 onValidateClick = { location -> currentScreen = location }
                             )
                         }

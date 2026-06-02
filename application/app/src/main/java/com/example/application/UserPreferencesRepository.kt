@@ -3,6 +3,7 @@ package com.example.application
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -13,7 +14,8 @@ data class UserProfile(
     val name: String = "",
     val age: String = "",
     val weight: String = "",
-    val height: String = ""
+    val height: String = "",
+    val lastExerciseDate: Long = 0L
 )
 
 //keys
@@ -21,6 +23,7 @@ private val NAME = stringPreferencesKey("name")
 private val AGE = stringPreferencesKey("age")
 private val WEIGHT = stringPreferencesKey("weight")
 private val HEIGHT = stringPreferencesKey("height")
+private val LAST_EXERCISE_DATE = longPreferencesKey("last_exercise_date")
 
 // read flow --> watch on changes and update on screen (ask from MainActivity)
 val Context.userProfileFlow: Flow<UserProfile>
@@ -29,7 +32,8 @@ val Context.userProfileFlow: Flow<UserProfile>
             name = prefs[NAME] ?: "",
             age = prefs[AGE] ?: "",
             weight = prefs[WEIGHT] ?: "",
-            height = prefs[HEIGHT] ?: ""
+            height = prefs[HEIGHT] ?: "",
+            lastExerciseDate = prefs[LAST_EXERCISE_DATE] ?: 0L
         )
     }
 
@@ -40,5 +44,12 @@ suspend fun Context.saveUserProfile(profile: UserProfile) {
         prefs[AGE] = profile.age
         prefs[WEIGHT] = profile.weight
         prefs[HEIGHT] = profile.height
+        prefs[LAST_EXERCISE_DATE] = profile.lastExerciseDate
+    }
+}
+
+suspend fun Context.markExerciseDone() {
+    dataStore.edit { prefs ->
+        prefs[LAST_EXERCISE_DATE] = System.currentTimeMillis()
     }
 }
