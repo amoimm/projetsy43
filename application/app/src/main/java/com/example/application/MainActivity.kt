@@ -74,7 +74,6 @@ class MainActivity : ComponentActivity() {
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
                 var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-                val coroutineScope = rememberCoroutineScope()
                 var toDoLists by remember { mutableStateOf(listOf<ToDoList>()) }
                 
                 // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
@@ -124,7 +123,7 @@ class MainActivity : ComponentActivity() {
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { newList ->
-                                activityList = newList
+                                activityList = newList.activities
                                 toDoLists = toDoLists + newList.copy(id = toDoLists.size)
                                 currentScreen = "Main"
                             }
