@@ -35,6 +35,7 @@ import com.example.application.ui.PartnerInfoScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
 import com.example.application.ui.ActiviteSportive
+import com.example.application.ui.ToDoList
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +74,12 @@ class MainActivity : ComponentActivity() {
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
                 var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
+                val coroutineScope = rememberCoroutineScope()
+                var toDoLists by remember { mutableStateOf(listOf<ToDoList>()) }
+                
+                // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
+                var activeListIndex by remember { mutableStateOf<Int?>(null) }
+                var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
 
                 val userProfile by userProfileFlow.collectAsState(initial = UserProfile())
 
@@ -118,20 +125,39 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { newList ->
                                 activityList = newList
+                                toDoLists = toDoLists + newList.copy(id = toDoLists.size)
                                 currentScreen = "Main"
                             }
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
                             activities = activityList,
+                            toDoLists = toDoLists,
                             onValidateClick = { location ->
-                                currentScreen = location
+                                if (location.contains("|")) {
+                                    val parts = location.split("|")
+                                    currentScreen = parts[0]
+                                    activeListIndex = parts[1].toInt()
+                                    activeActivityIndex = parts[2].toInt()
+                                } else {
+                                    currentScreen = location
+                                }
                             }
                         )
                         "Push upScreen" -> PushupScreen(
                             modifier = Modifier.padding(innerPadding),
                             onContinueClick = { 
                                 coroutineScope.launch { context.markExerciseDone() }
+                                // Marquer l'activité comme terminée
+                                if (activeListIndex != null && activeActivityIndex != null) {
+                                    toDoLists = toDoLists.mapIndexed { lIdx, list ->
+                                        if (lIdx == activeListIndex) {
+                                            list.copy(activities = list.activities.mapIndexed { aIdx, act ->
+                                                if (aIdx == activeActivityIndex) act.copy(isDone = true) else act
+                                            })
+                                        } else list
+                                    }
+                                }
                                 currentScreen = "Main" 
                             }
                         )
@@ -140,6 +166,16 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             onContinueClick = { 
                                 coroutineScope.launch { context.markExerciseDone() }
+                                // Marquer l'activité comme terminée
+                                if (activeListIndex != null && activeActivityIndex != null) {
+                                    toDoLists = toDoLists.mapIndexed { lIdx, list ->
+                                        if (lIdx == activeListIndex) {
+                                            list.copy(activities = list.activities.mapIndexed { aIdx, act ->
+                                                if (aIdx == activeActivityIndex) act.copy(isDone = true) else act
+                                            })
+                                        } else list
+                                    }
+                                }
                                 currentScreen = "Main" 
                             }
                         )
@@ -147,6 +183,7 @@ class MainActivity : ComponentActivity() {
                             MainScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 activities = activityList,
+                                toDoLists = toDoLists,
                                 onValidateClick = { location -> currentScreen = location }
                             )
                         }
