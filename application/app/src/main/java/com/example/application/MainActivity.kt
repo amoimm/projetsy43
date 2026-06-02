@@ -40,13 +40,12 @@ import com.example.application.ui.ToDoList
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
             val coroutineScope = rememberCoroutineScope()
-            
-            // Notification Permission Handling
+
             val launcher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
             ) { isGranted ->
@@ -73,11 +72,8 @@ class MainActivity : ComponentActivity() {
 
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
-                var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-                val coroutineScope = rememberCoroutineScope()
                 var toDoLists by remember { mutableStateOf(listOf<ToDoList>()) }
-                
-                // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
+
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
                 var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -124,14 +120,12 @@ class MainActivity : ComponentActivity() {
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { newList ->
-                                activityList = newList
                                 toDoLists = toDoLists + newList.copy(id = toDoLists.size)
                                 currentScreen = "Main"
                             }
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            activities = activityList,
                             toDoLists = toDoLists,
                             onValidateClick = { location ->
                                 if (location.contains("|")) {
@@ -144,29 +138,32 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
-                        "Push upScreen" -> PushupScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { 
-                                coroutineScope.launch { context.markExerciseDone() }
-                                // Marquer l'activité comme terminée
-                                if (activeListIndex != null && activeActivityIndex != null) {
-                                    toDoLists = toDoLists.mapIndexed { lIdx, list ->
-                                        if (lIdx == activeListIndex) {
-                                            list.copy(activities = list.activities.mapIndexed { aIdx, act ->
-                                                if (aIdx == activeActivityIndex) act.copy(isDone = true) else act
-                                            })
-                                        } else list
+                        "Push upScreen" -> {
+                            val objective = if (activeListIndex != null && activeActivityIndex != null) {
+                                toDoLists.getOrNull(activeListIndex!!)?.activities?.getOrNull(activeActivityIndex!!)?.valeur?.toIntOrNull() ?: 10
+                            } else 10
+
+                            PushupScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                targetObjective = objective,
+                                onContinueClick = { isValidated ->
+                                    if (isValidated && activeListIndex != null && activeActivityIndex != null) {
+                                        toDoLists = toDoLists.mapIndexed { lIdx, list ->
+                                            if (lIdx == activeListIndex) {
+                                                list.copy(activities = list.activities.mapIndexed { aIdx, act ->
+                                                    if (aIdx == activeActivityIndex) act.copy(isDone = true) else act
+                                                })
+                                            } else list
+                                        }
                                     }
+                                    currentScreen = "Main"
                                 }
-                                currentScreen = "Main" 
-                            }
-                        )
+                            )
+                        }
 
                         "runningScreen" -> RunningScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { 
-                                coroutineScope.launch { context.markExerciseDone() }
-                                // Marquer l'activité comme terminée
+                            onContinueClick = {
                                 if (activeListIndex != null && activeActivityIndex != null) {
                                     toDoLists = toDoLists.mapIndexed { lIdx, list ->
                                         if (lIdx == activeListIndex) {
@@ -176,13 +173,12 @@ class MainActivity : ComponentActivity() {
                                         } else list
                                     }
                                 }
-                                currentScreen = "Main" 
+                                currentScreen = "Main"
                             }
                         )
                         else -> {
                             MainScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                activities = activityList,
                                 toDoLists = toDoLists,
                                 onValidateClick = { location -> currentScreen = location }
                             )
