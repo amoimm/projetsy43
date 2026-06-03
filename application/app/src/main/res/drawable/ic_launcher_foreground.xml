@@ -7,7 +7,7 @@
 
     <!-- Dumbbell Bar (Neon Tube) -->
     <path
-        android:pathData="M22,28 L80,86 L86,80 L28,22 Z"
+        android:pathData="M31,35 L73,77 L77,73 L35,31 Z"
         android:strokeWidth="2"
         android:strokeColor="#2196F3"
         android:strokeLineJoin="round"/>

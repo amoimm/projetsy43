@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.application.ui.bdd.ToDoList
+import com.example.application.ui.bdd.ActiviteSportive
+import androidx.compose.foundation.lazy.items
 
 @Composable
 fun ToDoListCard(

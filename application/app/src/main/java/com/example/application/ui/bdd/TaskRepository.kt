@@ -11,8 +11,6 @@ interface TaskRepository {
     suspend fun updateTaskStatus(id: Int, isDone: Boolean)
     suspend fun deleteAllTasks()
 
-    val allToDoLists: Flow<List<ToDoList>> = taskDao.getAllToDoLists()
-    suspend fun insertToDoList(list: ToDoList) {
-        taskDao.insertToDoList(list)
-    }
+    val allToDoLists: Flow<List<ToDoList>>
+    suspend fun insertToDoList(list: ToDoList)
 }

@@ -23,7 +23,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.privacysandbox.tools.core.generator.build
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.application.ui.CapaciteScreen
 import com.example.application.ui.PersonalInfoScreen
 import com.example.application.ui.HowYouFeelScreen
@@ -37,18 +38,24 @@ import com.example.application.ui.PartnerInfoScreen
 import com.example.application.ui.PartnerDashboardScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
-import com.example.application.ui.ToDoList
-import com.example.application.ui.ActiviteSportive
-//bdd
 import com.example.application.ui.bdd.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.room.Room
+
+class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TaskViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return TaskViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
 
 class MainActivity : ComponentActivity() {
 
     private val taskViewModel: TaskViewModel by viewModels {
-        val database = Room.databaseBuilder(applicationContext, TaskDatabase::class.java, "task_db").build()
-        val repository = TaskRepository(database.taskDao())
+        val database = TaskDatabase.getDatabase(applicationContext)
+        val repository = OfflineTaskRepository(database.taskDao())
         TaskViewModelFactory(repository)
     }
 
@@ -87,10 +94,8 @@ class MainActivity : ComponentActivity() {
 
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
-                var toDoLists by remember { mutableStateOf(listOf<ToDoList>()) }
                 
                 // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
-                var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
                 val toDoLists by taskViewModel.allToDoLists.observeAsState(initial = emptyList())
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
                 var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
@@ -141,7 +146,6 @@ class MainActivity : ComponentActivity() {
                         )
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             onValidateClick = { newList ->
-                                toDoLists = toDoLists + newList.copy(id = toDoLists.size)
                                 taskViewModel.insertToDoList(newList)
                                 currentScreen = "Main"
                             }
@@ -160,19 +164,52 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
-                        "Push upScreen" -> PushupScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onContinueClick = {
-                                currentScreen = "Main" 
+                        "Push upScreen" -> {
+                            val target = remember(activeListIndex, activeActivityIndex, toDoLists) {
+                                try {
+                                    val list = toDoLists[activeListIndex!!]
+                                    val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
+                                    activity.split(",")[1].toInt()
+                                } catch (e: Exception) { 10 }
                             }
-                        )
+                            PushupScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                targetObjective = target,
+                                onContinueClick = { isSuccess ->
+                                    if (isSuccess && activeListIndex != null && activeActivityIndex != null) {
+                                        coroutineScope.launch { context.markExerciseDone() }
+                                        // Update database status
+                                        val list = toDoLists[activeListIndex!!]
+                                        val activities = list.activitiesJson.split(";").toMutableList()
+                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                        parts[2] = "true"
+                                        activities[activeActivityIndex!!] = parts.joinToString(",")
+                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                    }
+                                    currentScreen = "Main" 
+                                }
+                            )
+                        }
 
-                        "RunningScreen" -> RunningScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onContinueClick = {
-                                currentScreen = "Main" 
-                            }
-                        )
+                        "RunningScreen" -> {
+                            RunningScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                initialCount = 0.0f,
+                                onContinueClick = {
+                                    if (activeListIndex != null && activeActivityIndex != null) {
+                                        coroutineScope.launch { context.markExerciseDone() }
+                                        // Update database status
+                                        val list = toDoLists[activeListIndex!!]
+                                        val activities = list.activitiesJson.split(";").toMutableList()
+                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                        parts[2] = "true"
+                                        activities[activeActivityIndex!!] = parts.joinToString(",")
+                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                    }
+                                    currentScreen = "Main" 
+                                }
+                            )
+                        }
                         else -> {
                             MainScreen(
                                 modifier = Modifier.padding(innerPadding),

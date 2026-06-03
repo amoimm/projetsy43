@@ -16,4 +16,8 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
     override suspend fun updateTaskStatus(id: Int, isDone: Boolean) = taskDao.updateTaskStatus(id, isDone)
 
     override suspend fun deleteAllTasks() = taskDao.deleteAllTasks()
+
+    override val allToDoLists: Flow<List<ToDoList>> = taskDao.getAllLists()
+
+    override suspend fun insertToDoList(list: ToDoList) = taskDao.insertToDoList(list)
 }

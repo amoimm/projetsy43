@@ -22,13 +22,7 @@ import java.util.Locale
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.application.ui.bdd.ToDoList
-
-data class ActiviteSportive(
-    val id: Int, 
-    val categorie: String, 
-    val valeur: String,
-    var isDone: Boolean = false
-)
+import com.example.application.ui.bdd.ActiviteSportive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

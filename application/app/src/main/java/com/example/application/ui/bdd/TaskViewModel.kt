@@ -35,9 +35,9 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
         }
     }
 
-    val allToDoLists = repository.allToDoLists.asLiveData()
+    val allToDoLists = taskRepository.allToDoLists.asLiveData()
 
     fun insertToDoList(list: ToDoList) = viewModelScope.launch {
-        repository.insertToDoList(list)
+        taskRepository.insertToDoList(list)
     }
 }
