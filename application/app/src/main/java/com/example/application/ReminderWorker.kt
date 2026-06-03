@@ -22,9 +22,9 @@ class ReminderWorker(
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-        // If last exercise was before today, notify
+        // If last exercise was before today, notify with random content
         if (lastExerciseDate < today) {
-            NotificationHelper.showReminderNotification(applicationContext)
+            NotificationHelper.showRandomNotification(applicationContext)
         }
 
         return Result.success()

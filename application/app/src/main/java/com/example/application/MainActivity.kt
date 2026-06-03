@@ -32,9 +32,9 @@ import com.example.application.ui.RunningScreen
 import com.example.application.ui.WelcomeScreen
 import com.example.application.ui.ModeSelectionScreen
 import com.example.application.ui.PartnerInfoScreen
+import com.example.application.ui.PartnerDashboardScreen
 import com.example.application.ui.theme.ApplicationTheme
 import kotlinx.coroutines.launch
-import com.example.application.ui.ActiviteSportive
 import com.example.application.ui.ToDoList
 
 class MainActivity : ComponentActivity() {
@@ -73,8 +73,6 @@ class MainActivity : ComponentActivity() {
 
             ApplicationTheme {
                 var currentScreen by remember { mutableStateOf("welcome") }
-                var activityList by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-                val coroutineScope = rememberCoroutineScope()
                 var toDoLists by remember { mutableStateOf(listOf<ToDoList>()) }
                 
                 // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
@@ -97,8 +95,12 @@ class MainActivity : ComponentActivity() {
                         "partner_info" -> PartnerInfoScreen(
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { _, _, _ ->
-                                currentScreen = "welcome"
+                                currentScreen = "partner_dashboard"
                             }
+                        )
+                        "partner_dashboard" -> PartnerDashboardScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onBackClick = { currentScreen = "welcome" }
                         )
                         "personal_info" -> PersonalInfoScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -124,14 +126,12 @@ class MainActivity : ComponentActivity() {
                         "Build_ToDo_List" -> BuildToDoListScreen(
                             modifier = Modifier.padding(innerPadding),
                             onValidateClick = { newList ->
-                                activityList = newList
                                 toDoLists = toDoLists + newList.copy(id = toDoLists.size)
                                 currentScreen = "Main"
                             }
                         )
                         "Main" -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            activities = activityList,
                             toDoLists = toDoLists,
                             onValidateClick = { location ->
                                 if (location.contains("|")) {
@@ -162,7 +162,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
 
-                        "runningScreen" -> RunningScreen(
+                        "RunningScreen" -> RunningScreen(
                             modifier = Modifier.padding(innerPadding),
                             onContinueClick = { 
                                 coroutineScope.launch { context.markExerciseDone() }
@@ -182,7 +182,6 @@ class MainActivity : ComponentActivity() {
                         else -> {
                             MainScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                activities = activityList,
                                 toDoLists = toDoLists,
                                 onValidateClick = { location -> currentScreen = location }
                             )
