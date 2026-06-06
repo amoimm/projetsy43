@@ -160,15 +160,21 @@ fun PushupScreen(
                     VideoView(ctx).apply {
                         val videoPath = "android.resource://${ctx.packageName}/${R.raw.publicite}"
                         setVideoURI(Uri.parse(videoPath))
-                        setOnPreparedListener { it.start() }
-                        setOnCompletionListener { onContinueClick(true) }
-                        setOnErrorListener { _, _, _ -> onContinueClick(true); true }
+                        setOnPreparedListener { 
+                            it.isLooping = true // Plays the ad on a loop
+                            it.start() 
+                        }
+                        setOnErrorListener { _, _, _ -> 
+                            // If an error occurs, you can still continue
+                            onContinueClick(true)
+                            true 
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
             TextButton(onClick = { onContinueClick(true) }, modifier = Modifier.align(Alignment.TopEnd).padding(top = 32.dp, end = 16.dp)) {
-                Text("Passer la pub >", color = Color.White.copy(alpha = 0.7f))
+                Text(stringResource(id = R.string.skip_ad), color = Color.White.copy(alpha = 0.7f))
             }
         }
     } else {
@@ -195,7 +201,7 @@ fun PushupScreen(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Text(
-                        text = if (count >= targetObjective) "OBJECTIF ATTEINT ! 🎉" else stringResource(id = R.string.pushup_done),
+                        text = if (count >= targetObjective) stringResource(id = R.string.goal_achieved) else stringResource(id = R.string.pushup_done),
                         color = if (count >= targetObjective) Color.Yellow else Color.Gray,
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold
@@ -210,7 +216,7 @@ fun PushupScreen(
                     )
 
                     Text(
-                        text = "Objectif : $targetObjective",
+                        text = "Objective : $targetObjective",
                         color = Color.Gray,
                         fontSize = 18.sp
                     )
@@ -229,7 +235,7 @@ fun PushupScreen(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth().height(56.dp)
                         ) {
-                            Text(text = "VALIDER LA SESSION", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(text = stringResource(id = R.string.validate_session), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Button(
@@ -245,7 +251,7 @@ fun PushupScreen(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         TextButton(onClick = { onContinueClick(false) }) {
-                            Text(text = "ABANDONNER", color = Color.Red.copy(alpha = 0.6f), fontSize = 16.sp)
+                            Text(text = "GIVE UP", color = Color.Red.copy(alpha = 0.6f), fontSize = 16.sp)
                         }
                     }
                 }

@@ -60,6 +60,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
+    // Maps & Location
+    implementation(libs.play.services.location)
+    implementation(libs.osmdroid.android)
+
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
     testImplementation(libs.junit)

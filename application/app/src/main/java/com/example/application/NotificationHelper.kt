@@ -13,16 +13,16 @@ object NotificationHelper {
 
     // Liste de textes interchangeables
     private val motivationTexts = listOf(
-        "Dernière chance pour ta série !",
-        "Khabib te regarde...",
-        "Le sport n'attend pas.",
-        "Bouge-toi maintenant !",
-        "Ta progression est en danger.",
-        "Un petit effort pour un grand résultat.",
-        "Pas d'excuses aujourd'hui.",
-        "Deviens la meilleure version de toi-même.",
-        "L'entraînement du jour t'attend.",
-        "Reste discipliné, reste fort."
+        "Last chance for your streak!",
+        "He's watching you...",
+        "Sports don't wait!",
+        "Get moving now!",
+        "Your progress is at risk!",
+        "A little effort goes a long way!",
+        "No excuses today!",
+        "Become the best version of yourself!",
+        "Today's workout is waiting for you!",
+        "Stay disciplined, stay strong!"
     )
 
     // List of images to put in the notifications

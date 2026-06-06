@@ -1,6 +1,7 @@
 package com.example.application
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -15,7 +16,8 @@ data class UserProfile(
     val age: String = "",
     val weight: String = "",
     val height: String = "",
-    val lastExerciseDate: Long = 0L
+    val lastExerciseDate: Long = 0L,
+    val hasCompletedOnboarding: Boolean = false
 )
 
 //keys
@@ -24,8 +26,9 @@ private val AGE = stringPreferencesKey("age")
 private val WEIGHT = stringPreferencesKey("weight")
 private val HEIGHT = stringPreferencesKey("height")
 private val LAST_EXERCISE_DATE = longPreferencesKey("last_exercise_date")
+private val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
 
-// read flow --> watch on changes and update on screen (ask from MainActivity)
+// read flow
 val Context.userProfileFlow: Flow<UserProfile>
     get() = dataStore.data.map { prefs ->
         UserProfile(
@@ -33,11 +36,12 @@ val Context.userProfileFlow: Flow<UserProfile>
             age = prefs[AGE] ?: "",
             weight = prefs[WEIGHT] ?: "",
             height = prefs[HEIGHT] ?: "",
-            lastExerciseDate = prefs[LAST_EXERCISE_DATE] ?: 0L
+            lastExerciseDate = prefs[LAST_EXERCISE_DATE] ?: 0L,
+            hasCompletedOnboarding = prefs[HAS_COMPLETED_ONBOARDING] ?: false
         )
     }
 
-// save function --> Save in Context
+// save function
 suspend fun Context.saveUserProfile(profile: UserProfile) {
     dataStore.edit { prefs ->
         prefs[NAME] = profile.name
@@ -45,6 +49,13 @@ suspend fun Context.saveUserProfile(profile: UserProfile) {
         prefs[WEIGHT] = profile.weight
         prefs[HEIGHT] = profile.height
         prefs[LAST_EXERCISE_DATE] = profile.lastExerciseDate
+        prefs[HAS_COMPLETED_ONBOARDING] = profile.hasCompletedOnboarding
+    }
+}
+
+suspend fun Context.setCompletedOnboarding() {
+    dataStore.edit { prefs ->
+        prefs[HAS_COMPLETED_ONBOARDING] = true
     }
 }
 

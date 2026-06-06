@@ -28,7 +28,7 @@ interface TaskDao {
 
     // -----------------------
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertToDoList(toDoList: ToDoList)
 
     @Query("SELECT * FROM todo_lists")

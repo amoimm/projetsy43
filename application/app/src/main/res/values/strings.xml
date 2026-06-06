@@ -25,9 +25,23 @@
     <string name="how_you_feel_description">Please indicate how motivated you feel today</string>
     <string name="how_you_feel_high">High</string>
     <string name="how_you_feel_low">Low</string>
+
+
+    <!-- Pushup Screen / Running Screen -->
     <string name="pushup_done">Number of  pushups done :</string>
     <string name="add_pushup">Add pushup manually</string>
-    <string name="finish_session">Finish session</string>
+
+    <!-- Running Screen -->
     <string name="running_done">Distance travelled :</string>
     <string name="add_running">Add distance manually</string>
+    <string name="gps_acquired">GPS Acquired</string>
+    <string name="stat_distance">Distance</string>
+    <string name="stat_speed">Speed</string>
+    <string name="finish_run">FINISH RUN</string>
+
+    <!-- Reusable strings -->
+    <string name="finish_session">Finish session</string>
+    <string name="goal_achieved">GOAL ACHIEVED ! 🎉</string>
+    <string name="validate_session">VALIDATE SESSION</string>
+    <string name="skip_ad">Skip the ad ></string>
 </resources>

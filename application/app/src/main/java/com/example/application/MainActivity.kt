@@ -10,9 +10,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,8 +28,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -37,6 +49,7 @@ import com.example.application.ui.ModeSelectionScreen
 import com.example.application.ui.PartnerInfoScreen
 import com.example.application.ui.PartnerDashboardScreen
 import com.example.application.ui.theme.ApplicationTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.application.ui.bdd.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -93,129 +106,190 @@ class MainActivity : ComponentActivity() {
             }
 
             ApplicationTheme {
-                var currentScreen by remember { mutableStateOf("welcome") }
-                
-                // On garde en mémoire quelle activité est en cours pour pouvoir la marquer comme faite
+                val userProfileData by userProfileFlow.collectAsState(initial = null)
+                var currentScreen by remember { mutableStateOf("loading") }
+
+                // Setting the startup screen with animation
+                LaunchedEffect(userProfileData) {
+                    if (userProfileData != null && currentScreen == "loading") {
+                        if (userProfileData!!.hasCompletedOnboarding) {
+                            currentScreen = "welcome_back"
+                            delay(2500)
+                            currentScreen = "Main"
+                        } else {
+                            currentScreen = "welcome"
+                        }
+                    }
+                }
+
                 val toDoLists by taskViewModel.allToDoLists.observeAsState(initial = emptyList())
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
                 var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
 
-                val userProfile by userProfileFlow.collectAsState(initial = UserProfile())
-
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    when (currentScreen) {
-                        "welcome" -> WelcomeScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onContinueClick = { currentScreen = "mode_selection" }
-                        )
-                        "mode_selection" -> ModeSelectionScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onUserModeSelected = { currentScreen = "personal_info" },
-                            onPartnerModeSelected = { currentScreen = "partner_info" }
-                        )
-                        "partner_info" -> PartnerInfoScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { _, _, _ ->
-                                currentScreen = "partner_dashboard"
-                            }
-                        )
-                        "partner_dashboard" -> PartnerDashboardScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onBackClick = { currentScreen = "welcome" }
-                        )
-                        "personal_info" -> PersonalInfoScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            initialName = userProfile.name,
-                            initialAge = userProfile.age,
-                            initialWeight = userProfile.weight,
-                            initialHeight = userProfile.height,
-                            onValidateClick = { profil ->
-                                coroutineScope.launch {
-                                    saveUserProfile(profil)
-                                }
-                                currentScreen = "capacite_info"
-                            }
-                        )
-                        "capacite_info" -> CapaciteScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen="HowYouFeel" }
-                        )
-                        "HowYouFeel" -> HowYouFeelScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onValidateClick = { currentScreen="Main" }
-                        )
-                        "Build_ToDo_List" -> BuildToDoListScreen(
-                            onValidateClick = { newList ->
-                                taskViewModel.insertToDoList(newList)
-                                currentScreen = "Main"
-                            }
-                        )
-                        "Main" -> MainScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            toDoLists = toDoLists,
-                            onValidateClick = { location ->
-                                if (location.contains("|")) {
-                                    val parts = location.split("|")
-                                    currentScreen = parts[0]
-                                    activeListIndex = parts[1].toInt()
-                                    activeActivityIndex = parts[2].toInt()
-                                } else {
-                                    currentScreen = location
+                    AnimatedContent(
+                        targetState = currentScreen,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(750))
+                                .togetherWith(fadeOut(animationSpec = tween(750)))
+                        },
+                        label = "screen_transition"
+                    ) { targetScreen ->
+                        when (targetScreen) {
+                            "loading" -> { Box(modifier = Modifier.fillMaxSize().background(Color.Black)) }
+                            "welcome_back" -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Welcome back !",
+                                        color = Color.White,
+                                        fontSize = 48.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
-                        )
-                        "Push upScreen" -> {
-                            val target = remember(activeListIndex, activeActivityIndex, toDoLists) {
-                                try {
-                                    val list = toDoLists[activeListIndex!!]
-                                    val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
-                                    activity.split(",")[1].toInt()
-                                } catch (e: Exception) { 10 }
-                            }
-                            PushupScreen(
+                            "welcome" -> WelcomeScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                targetObjective = target,
+                                onContinueClick = { currentScreen = "mode_selection" }
+                            )
+                            "mode_selection" -> ModeSelectionScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onUserModeSelected = { currentScreen = "personal_info" },
+                                onPartnerModeSelected = { currentScreen = "partner_info" }
+                            )
+                            "partner_info" -> PartnerInfoScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onValidateClick = { _, _, _ ->
+                                    currentScreen = "partner_dashboard"
+                                }
+                            )
+                            "partner_dashboard" -> PartnerDashboardScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onBackClick = { currentScreen = "welcome" }
+                            )
+                            "personal_info" -> PersonalInfoScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                initialName = userProfileData?.name ?: "",
+                                initialAge = userProfileData?.age ?: "",
+                                initialWeight = userProfileData?.weight ?: "",
+                                initialHeight = userProfileData?.height ?: "",
+                                onValidateClick = { profil ->
+                                    coroutineScope.launch {
+                                        saveUserProfile(profil)
+                                    }
+                                    currentScreen = "capacite_info"
+                                }
+                            )
+                            "capacite_info" -> CapaciteScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onValidateClick = { currentScreen="HowYouFeel" }
+                            )
+                            "HowYouFeel" -> HowYouFeelScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onValidateClick = { 
+                                    coroutineScope.launch { context.setCompletedOnboarding() }
+                                    currentScreen="Main" 
+                                }
+                            )
+                            "Build_ToDo_List" -> BuildToDoListScreen(
+                                onValidateClick = { newList ->
+                                    taskViewModel.insertToDoList(newList)
+                                    currentScreen = "Main"
+                                }
+                            )
+                            "Main" -> MainScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                toDoLists = toDoLists,
+                                onValidateClick = { location ->
+                                    if (location.contains("|")) {
+                                        val parts = location.split("|")
+                                        currentScreen = parts[0]
+                                        activeListIndex = parts[1].toInt()
+                                        activeActivityIndex = parts[2].toInt()
+                                    } else {
+                                        currentScreen = location
+                                    }
+                                }
+                            )
+                            "Push upScreen" -> {
+                                val target = remember(activeListIndex, activeActivityIndex, toDoLists) {
+                                    try {
+                                        val list = toDoLists[activeListIndex!!]
+                                        val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
+                                        activity.split(",")[1].toInt()
+                                    } catch (e: Exception) { 10 }
+                                }
+                                PushupScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    targetObjective = target,
+                                    onContinueClick = { isSuccess ->
+                                        if (isSuccess && activeListIndex != null && activeActivityIndex != null) {
+                                            coroutineScope.launch { context.markExerciseDone() }
+                                            
+                                            // Mise à jour sécurisée de la base de données
+                                            try {
+                                                if (activeListIndex!! < toDoLists.size) {
+                                                    val list = toDoLists[activeListIndex!!]
+                                                    val activities = list.activitiesJson.split(";").toMutableList()
+                                                    if (activeActivityIndex!! < activities.size) {
+                                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                                        if (parts.size >= 3) {
+                                                            parts[2] = "true"
+                                                            activities[activeActivityIndex!!] = parts.joinToString(",")
+                                                            taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                                        }
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                        currentScreen = "Main" 
+                                    }
+                                )
+                            }
+
+                            "RunningScreen" -> {
+                                RunningScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                initialCount = 0.0f,
                                 onContinueClick = { isSuccess ->
                                     if (isSuccess && activeListIndex != null && activeActivityIndex != null) {
                                         coroutineScope.launch { context.markExerciseDone() }
-                                        // Update database status
-                                        val list = toDoLists[activeListIndex!!]
-                                        val activities = list.activitiesJson.split(";").toMutableList()
-                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                        parts[2] = "true"
-                                        activities[activeActivityIndex!!] = parts.joinToString(",")
-                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                        
+                                        // Mise à jour sécurisée de la base de données
+                                        try {
+                                            if (activeListIndex!! < toDoLists.size) {
+                                                val list = toDoLists[activeListIndex!!]
+                                                val activities = list.activitiesJson.split(";").toMutableList()
+                                                if (activeActivityIndex!! < activities.size) {
+                                                    val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                                    if (parts.size >= 3) {
+                                                        parts[2] = "true"
+                                                        activities[activeActivityIndex!!] = parts.joinToString(",")
+                                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                                    }
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                        }
                                     }
                                     currentScreen = "Main" 
                                 }
                             )
-                        }
-
-                        "RunningScreen" -> {
-                            RunningScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                initialCount = 0.0f,
-                                onContinueClick = {
-                                    if (activeListIndex != null && activeActivityIndex != null) {
-                                        coroutineScope.launch { context.markExerciseDone() }
-                                        // Update database status
-                                        val list = toDoLists[activeListIndex!!]
-                                        val activities = list.activitiesJson.split(";").toMutableList()
-                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                        parts[2] = "true"
-                                        activities[activeActivityIndex!!] = parts.joinToString(",")
-                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
-                                    }
-                                    currentScreen = "Main" 
-                                }
-                            )
-                        }
-                        else -> {
-                            MainScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                toDoLists = toDoLists,
-                                onValidateClick = { location -> currentScreen = location }
-                            )
+                            }
+                            else -> {
+                                MainScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    toDoLists = toDoLists,
+                                    onValidateClick = { location -> currentScreen = location }
+                                )
+                            }
                         }
                     }
                 }
