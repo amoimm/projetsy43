@@ -25,12 +25,4 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET isDone = :isDone WHERE id = :id")
     suspend fun updateTaskStatus(id: Int, isDone: Boolean)
-
-    // -----------------------
-
-    @Insert
-    suspend fun insertToDoList(toDoList: ToDoList)
-
-    @Query("SELECT * FROM todo_lists")
-    fun getAllLists(): Flow<List<ToDoList>>
 }

@@ -18,10 +18,6 @@ import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-//FOR BDD
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import com.example.application.ui.bdd.ToDoList
 
 data class ActiviteSportive(
     val id: Int, 
@@ -29,6 +25,15 @@ data class ActiviteSportive(
     val valeur: String,
     var isDone: Boolean = false
 )
+
+data class ToDoList(
+    val id: Int,
+    val title: String,
+    val date: String,
+    val activities: List<ActiviteSportive>
+) {
+    val isCompleted: Boolean get() = activities.isNotEmpty() && activities.all { it.isDone }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,16 +199,7 @@ fun BuildToDoListScreen(
         Button(
             onClick = { 
                 if (titleSaisie.isNotBlank() && listeActivites.isNotEmpty()) {
-                    val activitiesString = listeActivites.joinToString(";") {
-                        "${it.categorie},${it.valeur},${it.isDone}"
-                    }
-                    onValidateClick(
-                        ToDoList(
-                            title = titleSaisie,
-                            date = dateSelectionnee,
-                            activitiesJson = activitiesString
-                        )
-                    )
+                    onValidateClick(ToDoList(0, titleSaisie, dateSelectionnee, listeActivites)) 
                 }
             },
             colors = ButtonDefaults.buttonColors(

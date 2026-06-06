@@ -11,11 +11,3 @@ data class Task(
     val isDone: Boolean = false,
     val date: String = ""
 )
-
-@Entity(tableName = "todo_lists")
-data class ToDoList(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val title: String,
-    val date: String,
-    val activitiesJson: String
-)
