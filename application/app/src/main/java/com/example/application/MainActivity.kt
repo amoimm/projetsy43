@@ -216,20 +216,20 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             "Push upScreen" -> {
-                                val target = remember(activeListIndex, activeActivityIndex, toDoLists) {
+                                val (target, initialProgress) = remember(activeListIndex, activeActivityIndex, toDoLists) {
                                     try {
                                         val list = toDoLists[activeListIndex!!]
                                         val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
-                                        activity.split(",")[1].toInt()
-                                    } catch (e: Exception) { 10 }
+                                        val parts = activity.split(",")
+                                        parts[1].toInt() to (if (parts.size >= 4) parts[3].toInt() else 0)
+                                    } catch (e: Exception) { 10 to 0 }
                                 }
                                 PushupScreen(
                                     modifier = Modifier.padding(innerPadding),
+                                    initialCount = initialProgress,
                                     targetObjective = target,
-                                    onContinueClick = { isSuccess ->
-                                        if (isSuccess && activeListIndex != null && activeActivityIndex != null) {
-                                            coroutineScope.launch { context.markExerciseDone() }
-                                            
+                                    onContinueClick = { finalCount ->
+                                        if (activeListIndex != null && activeActivityIndex != null) {
                                             // Mise à jour sécurisée de la base de données
                                             try {
                                                 if (activeListIndex!! < toDoLists.size) {
@@ -237,11 +237,19 @@ class MainActivity : ComponentActivity() {
                                                     val activities = list.activitiesJson.split(";").toMutableList()
                                                     if (activeActivityIndex!! < activities.size) {
                                                         val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                                        if (parts.size >= 3) {
+                                                        
+                                                        // Update progress
+                                                        while (parts.size < 4) parts.add("0")
+                                                        parts[3] = finalCount.toString()
+                                                        
+                                                        // Update isDone if objective reached
+                                                        if (finalCount >= target) {
                                                             parts[2] = "true"
-                                                            activities[activeActivityIndex!!] = parts.joinToString(",")
-                                                            taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                                            coroutineScope.launch { context.markExerciseDone() }
                                                         }
+                                                        
+                                                        activities[activeActivityIndex!!] = parts.joinToString(",")
+                                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
                                                     }
                                                 }
                                             } catch (e: Exception) {
@@ -254,34 +262,49 @@ class MainActivity : ComponentActivity() {
                             }
 
                             "RunningScreen" -> {
+                                val (target, initialProgress) = remember(activeListIndex, activeActivityIndex, toDoLists) {
+                                    try {
+                                        val list = toDoLists[activeListIndex!!]
+                                        val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
+                                        val parts = activity.split(",")
+                                        parts[1].toFloat() to (if (parts.size >= 4) parts[3].toFloat() else 0f)
+                                    } catch (e: Exception) { 5.0f to 0.0f }
+                                }
                                 RunningScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                initialCount = 0.0f,
-                                onContinueClick = { isSuccess ->
-                                    if (isSuccess && activeListIndex != null && activeActivityIndex != null) {
-                                        coroutineScope.launch { context.markExerciseDone() }
-                                        
-                                        // Mise à jour sécurisée de la base de données
-                                        try {
-                                            if (activeListIndex!! < toDoLists.size) {
-                                                val list = toDoLists[activeListIndex!!]
-                                                val activities = list.activitiesJson.split(";").toMutableList()
-                                                if (activeActivityIndex!! < activities.size) {
-                                                    val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                                    if (parts.size >= 3) {
-                                                        parts[2] = "true"
+                                    modifier = Modifier.padding(innerPadding),
+                                    initialCount = initialProgress,
+                                    targetObjective = target,
+                                    onContinueClick = { finalDistance ->
+                                        if (activeListIndex != null && activeActivityIndex != null) {
+                                            // Mise à jour sécurisée de la base de données
+                                            try {
+                                                if (activeListIndex!! < toDoLists.size) {
+                                                    val list = toDoLists[activeListIndex!!]
+                                                    val activities = list.activitiesJson.split(";").toMutableList()
+                                                    if (activeActivityIndex!! < activities.size) {
+                                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                                        
+                                                        // Update progress
+                                                        while (parts.size < 4) parts.add("0")
+                                                        parts[3] = finalDistance.toString()
+                                                        
+                                                        // Update isDone if objective reached
+                                                        if (finalDistance >= target) {
+                                                            parts[2] = "true"
+                                                            coroutineScope.launch { context.markExerciseDone() }
+                                                        }
+                                                        
                                                         activities[activeActivityIndex!!] = parts.joinToString(",")
                                                         taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
                                                     }
                                                 }
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
                                             }
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
                                         }
+                                        currentScreen = "Main" 
                                     }
-                                    currentScreen = "Main" 
-                                }
-                            )
+                                )
                             }
                             else -> {
                                 MainScreen(

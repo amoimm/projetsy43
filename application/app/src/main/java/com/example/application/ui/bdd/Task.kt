@@ -7,7 +7,8 @@ data class ActiviteSportive(
     val id: Int,
     val categorie: String,
     val valeur: String,
-    var isDone: Boolean = false
+    var isDone: Boolean = false,
+    var progress: String = "0"
 )
 
 @Entity(tableName = "tasks")
@@ -31,7 +32,13 @@ data class ToDoList(
         return try {
             activitiesJson.split(";").mapIndexed { index, s ->
                 val parts = s.split(",")
-                ActiviteSportive(index, parts[0], parts[1], parts[2].toBoolean())
+                ActiviteSportive(
+                    id = index,
+                    categorie = parts[0],
+                    valeur = parts[1],
+                    isDone = parts[2].toBoolean(),
+                    progress = if (parts.size >= 4) parts[3] else "0"
+                )
             }
         } catch (e: Exception) {
             emptyList()

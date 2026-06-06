@@ -45,7 +45,7 @@ fun PushupScreen(
     modifier: Modifier = Modifier,
     initialCount: Int = 0,
     targetObjective: Int,
-    onContinueClick: (Boolean) -> Unit = {}
+    onContinueClick: (Int) -> Unit = {}
 ) {
     var count by remember { mutableIntStateOf(initialCount) }
     var fontChange by remember(count) { mutableStateOf(120.sp) }
@@ -161,19 +161,15 @@ fun PushupScreen(
                         val videoPath = "android.resource://${ctx.packageName}/${R.raw.publicite}"
                         setVideoURI(Uri.parse(videoPath))
                         setOnPreparedListener { 
-                            it.isLooping = true // Plays the ad on a loop
+                            it.isLooping = true
                             it.start() 
                         }
-                        setOnErrorListener { _, _, _ -> 
-                            // If an error occurs, you can still continue
-                            onContinueClick(true)
-                            true 
-                        }
+                        setOnErrorListener { _, _, _ -> onContinueClick(count); true }
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
-            TextButton(onClick = { onContinueClick(true) }, modifier = Modifier.align(Alignment.TopEnd).padding(top = 32.dp, end = 16.dp)) {
+            TextButton(onClick = { onContinueClick(count) }, modifier = Modifier.align(Alignment.TopEnd).padding(top = 32.dp, end = 16.dp)) {
                 Text(stringResource(id = R.string.skip_ad), color = Color.White.copy(alpha = 0.7f))
             }
         }
@@ -250,8 +246,8 @@ fun PushupScreen(
                             Text(text = stringResource(id = R.string.add_pushup).uppercase(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        TextButton(onClick = { onContinueClick(false) }) {
-                            Text(text = "GIVE UP", color = Color.Red.copy(alpha = 0.6f), fontSize = 16.sp)
+                        TextButton(onClick = { onContinueClick(count) }) {
+                            Text(text = "SAVE & QUIT", color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
                         }
                     }
                 }

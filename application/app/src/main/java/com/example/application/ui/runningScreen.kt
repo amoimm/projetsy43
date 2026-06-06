@@ -36,7 +36,8 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 fun RunningScreen(
     modifier: Modifier = Modifier,
     initialCount: Float = 0.0f,
-    onContinueClick: (Boolean) -> Unit = {}
+    targetObjective: Float = 5.0f,
+    onContinueClick: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
@@ -116,9 +117,6 @@ fun RunningScreen(
                             setMultiTouchControls(true)
                             controller.setZoom(17.5)
                             
-                            // Style the map (OSM doesn't have a native dark mode easily but we can invert it or use tiles)
-                            // For consistency with black app, let's keep it clean
-                            
                             val myLocationOverlay = MyLocationNewOverlay(this)
                             myLocationOverlay.enableMyLocation()
                             myLocationOverlay.enableFollowLocation()
@@ -155,6 +153,13 @@ fun RunningScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Text(
+                        text = "GOAL : %.1f km".format(targetObjective),
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -178,16 +183,18 @@ fun RunningScreen(
                     }
 
                     Button(
-                        onClick = { onContinueClick(true) },
+                        onClick = { onContinueClick(totalDistance) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Green, 
+                            containerColor = if (totalDistance >= targetObjective) Color.Green else Color.White, 
                             contentColor = Color.Black
                         ),
                         modifier = Modifier.fillMaxWidth().height(60.dp),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
-                            text = stringResource(id = R.string.finish_run), 
+                            text = if (totalDistance >= targetObjective) 
+                                stringResource(id = R.string.finish_run) 
+                            else "SAVE & QUIT",
                             fontWeight = FontWeight.ExtraBold, 
                             fontSize = 20.sp
                         )

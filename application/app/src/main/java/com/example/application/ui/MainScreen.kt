@@ -114,6 +114,11 @@ fun ActivityRow(
     onPlayClick: () -> Unit
 ) {
     val suffixe = if (activity.categorie == "Running") "km" else "reps"
+    val progressVal = try {
+        if (activity.categorie == "Running") "%.2f".format(activity.progress.toFloat())
+        else activity.progress
+    } catch (e: Exception) { "0" }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -128,7 +133,7 @@ fun ActivityRow(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "Goal: ${activity.valeur} $suffixe",
+                text = "Progress: $progressVal / ${activity.valeur} $suffixe",
                 color = Color.Gray,
                 fontSize = 12.sp
             )
