@@ -53,6 +53,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.application.ui.bdd.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.autofill.ContentDataType
+import kotlin.text.format
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -113,14 +118,6 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(userProfileData) {
                     if (userProfileData != null && currentScreen == "loading") {
                         currentScreen = "welcome"
-                        /*
-                        if (userProfileData!!.hasCompletedOnboarding) {
-                            currentScreen = "welcome_back"
-                            delay(2500)
-                            currentScreen = "Main"
-                        } else {
-                            currentScreen = "welcome"
-                        }*/
                     }
                 }
 
@@ -138,7 +135,9 @@ class MainActivity : ComponentActivity() {
                         label = "screen_transition"
                     ) { targetScreen ->
                         when (targetScreen) {
-                            "loading" -> { Box(modifier = Modifier.fillMaxSize().background(Color.Black)) }
+                            "loading" -> { Box(modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black)) }
                             "welcome_back" -> {
                                 Box(
                                     modifier = Modifier
@@ -160,7 +159,22 @@ class MainActivity : ComponentActivity() {
                             )
                             "mode_selection" -> ModeSelectionScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onUserModeSelected = { currentScreen = "personal_info" },
+                                onUserModeSelected = {
+                                    if (userProfileData?.hasCompletedOnboarding == true) {
+                                        val today = SimpleDateFormat(
+                                            "dd/MM/yyyy",
+                                            Locale.getDefault()).format(Date()
+                                            )
+
+                                        if (userProfileData?.lastMotivationDate == today) {
+                                            currentScreen = "Main"
+                                        } else {
+                                            currentScreen = "HowYouFeel"
+                                        }
+                                    } else {
+                                        currentScreen = "personal_info"
+                                    }
+                                },
                                 onPartnerModeSelected = { currentScreen = "partner_info" }
                             )
                             "partner_info" -> PartnerInfoScreen(
@@ -188,7 +202,13 @@ class MainActivity : ComponentActivity() {
                             )
                             "capacite_info" -> CapaciteScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onValidateClick = { currentScreen="HowYouFeel" }
+                                onValidateClick = { p, r ->
+                                    coroutineScope.launch {
+                                        val current = userProfileData ?: UserProfile()
+                                        saveUserProfile(current.copy(maxPushups = p, maxRunningKm = r))
+                                    }
+                                    currentScreen = "HowYouFeel"
+                                }
                             )
                             "HowYouFeel" -> HowYouFeelScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -196,12 +216,14 @@ class MainActivity : ComponentActivity() {
                                 onValidateClick = { generatedList ->
                                     coroutineScope.launch {
                                         context.setCompletedOnboarding()
+                                        context.updateMotivationDate()
                                         taskViewModel.insertToDoList(generatedList)
                                     }
                                     currentScreen="Main" 
                                 }
                             )
                             "Build_ToDo_List" -> BuildToDoListScreen(
+                                onBackClick = { currentScreen = "Main" },
                                 onValidateClick = { newList ->
                                     taskViewModel.insertToDoList(newList)
                                     currentScreen = "Main"
@@ -219,9 +241,34 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         currentScreen = location
                                     }
+                                },
+                                onDeleteClick = { list ->
+                                    taskViewModel.deleteToDoList(list)
+                                },
+                                onShareClick = { list ->
+                                    val activitiesText = list.activities.joinToString("\n") {
+                                        val unit = if (it.categorie == "Running") "km" else "reps"
+                                        "- ${it.categorie}: ${it.valeur} $unit (Completed!)"
+                                    }
+                                    val shareMessage = """
+                                        🔥 I just finished my workout: ${list.title}! 🔥
+                                        📅 Date: ${list.date}
+                                        
+                                        My activities:
+                                        $activitiesText
+                                        
+                                        Done with my favotire fitness app 🏋️
+                                        Link: "One day maybe !"
+                                    """.trimIndent()
+
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, shareMessage)
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(intent, "Share your progress"))
                                 }
                             )
-                            "Push upScreen" -> {
+                            "PushupScreen" -> {
                                 val (target, initialProgress) = remember(activeListIndex, activeActivityIndex, toDoLists) {
                                     try {
                                         val list = toDoLists[activeListIndex!!]

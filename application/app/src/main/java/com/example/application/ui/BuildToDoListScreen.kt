@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 //FOR BDD
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -28,6 +31,7 @@ import com.example.application.ui.bdd.ActiviteSportive
 @Composable
 fun BuildToDoListScreen(
     modifier: Modifier = Modifier,
+    onBackClick: () -> Unit,
     onValidateClick: (ToDoList) -> Unit
 ) {
     var titleSaisie by remember { mutableStateOf("") }
@@ -71,6 +75,15 @@ fun BuildToDoListScreen(
                 .fillMaxSize()
                 .padding(24.dp)
         ) {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = "Create To-Do List",
                 color = Color.White,

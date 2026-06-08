@@ -13,4 +13,5 @@ interface TaskRepository {
 
     val allToDoLists: Flow<List<ToDoList>>
     suspend fun insertToDoList(list: ToDoList)
+    suspend fun deleteToDoList(list: ToDoList)
 }

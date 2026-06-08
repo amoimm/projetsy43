@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 val Context.dataStore by preferencesDataStore(name = "user_stock_file")
 
@@ -19,6 +22,7 @@ data class UserProfile(
     val maxPushups: String = "0",
     val maxRunningKm: String = "0.0",
     val lastExerciseDate: Long = 0L,
+    val lastMotivationDate: String = "",
     val hasCompletedOnboarding: Boolean = false
 )
 
@@ -30,6 +34,7 @@ private val HEIGHT = stringPreferencesKey("height")
 private val MAX_PUSHUPS = stringPreferencesKey("max_pushups")
 private val MAX_RUNNING_KM = stringPreferencesKey("max_running_km")
 private val LAST_EXERCISE_DATE = longPreferencesKey("last_exercise_date")
+private val LAST_MOTIVATION_DATE = stringPreferencesKey("last_motivation_date")
 private val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
 
 // read flow
@@ -43,6 +48,7 @@ val Context.userProfileFlow: Flow<UserProfile>
             maxPushups = prefs[MAX_PUSHUPS] ?: "0",
             maxRunningKm = prefs[MAX_RUNNING_KM] ?: "0.0",
             lastExerciseDate = prefs[LAST_EXERCISE_DATE] ?: 0L,
+            lastMotivationDate = prefs[LAST_MOTIVATION_DATE] ?: "",
             hasCompletedOnboarding = prefs[HAS_COMPLETED_ONBOARDING] ?: false
         )
     }
@@ -57,7 +63,15 @@ suspend fun Context.saveUserProfile(profile: UserProfile) {
         prefs[MAX_PUSHUPS] = profile.maxPushups
         prefs[MAX_RUNNING_KM] = profile.maxRunningKm
         prefs[LAST_EXERCISE_DATE] = profile.lastExerciseDate
+        prefs[LAST_MOTIVATION_DATE] = profile.lastMotivationDate
         prefs[HAS_COMPLETED_ONBOARDING] = profile.hasCompletedOnboarding
+    }
+}
+
+suspend fun Context.updateMotivationDate() {
+    val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+    dataStore.edit { prefs ->
+        prefs[LAST_MOTIVATION_DATE] = today
     }
 }
 

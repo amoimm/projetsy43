@@ -33,4 +33,7 @@ interface TaskDao {
 
     @Query("SELECT * FROM todo_lists")
     fun getAllLists(): Flow<List<ToDoList>>
+
+    @Delete
+    suspend fun deleteToDoList(toDoList: ToDoList)
 }

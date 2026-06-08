@@ -40,4 +40,8 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
     fun insertToDoList(list: ToDoList) = viewModelScope.launch {
         taskRepository.insertToDoList(list)
     }
+
+    fun deleteToDoList(list: ToDoList) = viewModelScope.launch {
+        taskRepository.deleteToDoList(list)
+    }
 }

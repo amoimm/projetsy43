@@ -8,7 +8,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,14 +24,15 @@ import java.util.Date
 import java.util.Locale
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.bdd.ActiviteSportive
-import androidx.compose.foundation.lazy.items
 
 @Composable
 fun ToDoListCard(
     toDoList: ToDoList,
     isExpanded: Boolean,
     onExpandClick: () -> Unit,
-    onActivityPlayClick: (Int) -> Unit, // Reçoit l'index de l'activité
+    onActivityPlayClick: (Int) -> Unit,
+    onDeleteClick: () -> Unit,
+    onShareClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -102,6 +105,30 @@ fun ToDoListCard(
                         onPlayClick = { onActivityPlayClick(index) }
                     )
                 }
+
+                if (toDoList.isCompleted) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onShareClick) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Share",
+                                tint = Color(0xFF90CAF9)
+                            )
+                        }
+                        IconButton(onClick = onDeleteClick) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = Color(0xFFEF5350)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -167,19 +194,19 @@ fun ActivityRow(
 fun MainScreen(
     modifier: Modifier = Modifier,
     toDoLists: List<ToDoList> = emptyList(),
-    onValidateClick: (String) -> Unit = {}
+    onValidateClick: (String) -> Unit = {},
+    onDeleteClick: (ToDoList) -> Unit = {},
+    onShareClick: (ToDoList) -> Unit = {}
 ) {
-    // Utiliser les IDs pour suivre les cartes dépliées (plus robuste que les index après un tri)
     val expandedIds = remember { mutableStateListOf<Int>() }
 
-    // Tri chronologique des listes par date (dd/MM/yyyy)
     val sortedToDoLists = remember(toDoLists) {
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        toDoLists.sortedBy { list ->
+        toDoLists.sortedByDescending { list ->
             try {
                 dateFormat.parse(list.date)
             } catch (e: Exception) {
-                Date(0) // Date par défaut si le format est invalide ou "Select a date"
+                Date(0)
             }
         }
     }
@@ -221,11 +248,11 @@ fun MainScreen(
                                 }
                             },
                             onActivityPlayClick = { activityIndex ->
-                                // Navigation formatée : "Screen|ListIndex|ActivityIndex"
-                                // Note: on utilise l'index réel de la liste dans toDoLists pour la navigation
                                 val originalIndex = toDoLists.indexOf(toDoList)
                                 onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
-                            }
+                            },
+                            onDeleteClick = { onDeleteClick(toDoList) },
+                            onShareClick = { onShareClick(toDoList) }
                         )
                     }
                 }
