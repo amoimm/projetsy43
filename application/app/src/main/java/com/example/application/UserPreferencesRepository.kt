@@ -16,6 +16,8 @@ data class UserProfile(
     val age: String = "",
     val weight: String = "",
     val height: String = "",
+    val maxPushups: String = "0",
+    val maxRunningKm: String = "0.0",
     val lastExerciseDate: Long = 0L,
     val hasCompletedOnboarding: Boolean = false
 )
@@ -25,6 +27,8 @@ private val NAME = stringPreferencesKey("name")
 private val AGE = stringPreferencesKey("age")
 private val WEIGHT = stringPreferencesKey("weight")
 private val HEIGHT = stringPreferencesKey("height")
+private val MAX_PUSHUPS = stringPreferencesKey("max_pushups")
+private val MAX_RUNNING_KM = stringPreferencesKey("max_running_km")
 private val LAST_EXERCISE_DATE = longPreferencesKey("last_exercise_date")
 private val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
 
@@ -36,6 +40,8 @@ val Context.userProfileFlow: Flow<UserProfile>
             age = prefs[AGE] ?: "",
             weight = prefs[WEIGHT] ?: "",
             height = prefs[HEIGHT] ?: "",
+            maxPushups = prefs[MAX_PUSHUPS] ?: "0",
+            maxRunningKm = prefs[MAX_RUNNING_KM] ?: "0.0",
             lastExerciseDate = prefs[LAST_EXERCISE_DATE] ?: 0L,
             hasCompletedOnboarding = prefs[HAS_COMPLETED_ONBOARDING] ?: false
         )
@@ -48,6 +54,8 @@ suspend fun Context.saveUserProfile(profile: UserProfile) {
         prefs[AGE] = profile.age
         prefs[WEIGHT] = profile.weight
         prefs[HEIGHT] = profile.height
+        prefs[MAX_PUSHUPS] = profile.maxPushups
+        prefs[MAX_RUNNING_KM] = profile.maxRunningKm
         prefs[LAST_EXERCISE_DATE] = profile.lastExerciseDate
         prefs[HAS_COMPLETED_ONBOARDING] = profile.hasCompletedOnboarding
     }

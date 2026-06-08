@@ -124,14 +124,20 @@ fun BuildToDoListScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = { categorieSelectionnee = "Push up" },
+                            onClick = {
+                                categorieSelectionnee = "Push up"
+                                valeurSaisie = ""
+                                      },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (categorieSelectionnee == "Push up") Color(0xFF1565C0) else Color.Gray
                             ),
                             modifier = Modifier.weight(1f)
                         ) { Text("Push up", color = Color.White) }
                         Button(
-                            onClick = { categorieSelectionnee = "Running" },
+                            onClick = {
+                                categorieSelectionnee = "Running"
+                                valeurSaisie = ""
+                                      },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (categorieSelectionnee == "Running") Color(0xFF1565C0) else Color.Gray
                             ),
@@ -141,7 +147,17 @@ fun BuildToDoListScreen(
 
                     OutlinedTextField(
                         value = valeurSaisie,
-                        onValueChange = { valeurSaisie = it },
+                        onValueChange = { input ->
+                            if (categorieSelectionnee == "Running") {
+                                if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                                    valeurSaisie = input.replace(',', '.')
+                                }
+                            } else {
+                                if (input.all { it.isDigit() }) {
+                                    valeurSaisie = input
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Goal (reps or km)", color = Color.Gray) },
                         colors = OutlinedTextFieldDefaults.colors(

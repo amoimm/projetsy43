@@ -47,7 +47,6 @@ fun ToDoListCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Cercle de statut de la liste entière
                     Box(
                         modifier = Modifier
                             .size(32.dp)

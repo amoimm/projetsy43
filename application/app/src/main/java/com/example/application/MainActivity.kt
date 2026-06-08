@@ -112,13 +112,15 @@ class MainActivity : ComponentActivity() {
                 // Setting the startup screen with animation
                 LaunchedEffect(userProfileData) {
                     if (userProfileData != null && currentScreen == "loading") {
+                        currentScreen = "welcome"
+                        /*
                         if (userProfileData!!.hasCompletedOnboarding) {
                             currentScreen = "welcome_back"
                             delay(2500)
                             currentScreen = "Main"
                         } else {
                             currentScreen = "welcome"
-                        }
+                        }*/
                     }
                 }
 
@@ -190,8 +192,12 @@ class MainActivity : ComponentActivity() {
                             )
                             "HowYouFeel" -> HowYouFeelScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onValidateClick = { 
-                                    coroutineScope.launch { context.setCompletedOnboarding() }
+                                userProfile = userProfileData,
+                                onValidateClick = { generatedList ->
+                                    coroutineScope.launch {
+                                        context.setCompletedOnboarding()
+                                        taskViewModel.insertToDoList(generatedList)
+                                    }
                                     currentScreen="Main" 
                                 }
                             )

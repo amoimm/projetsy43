@@ -33,7 +33,7 @@ import com.example.application.ui.theme.ApplicationTheme
 @Composable
 fun CapaciteScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit = {}
+    onValidateClick: (String, String) -> Unit = {_, _ -> }
 ) {
 
     var pompes by remember { mutableStateOf("") }
@@ -61,7 +61,7 @@ fun CapaciteScreen(
             InfoInputField(
                 label = stringResource(id = R.string.capacity_info_pompes) + " (Max)",
                 value = pompes,
-                onValueChange = { pompes = it },
+                onValueChange = { if (it.all { char -> char.isDigit() }) pompes = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -70,13 +70,20 @@ fun CapaciteScreen(
             InfoInputField(
                 label = stringResource(id = R.string.capacity_info_courses) + " (km Max)",
                 value = courseKm,
-                onValueChange = { courseKm = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                        courseKm = input.replace(',', '.')
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
 
+        val isFormValid = pompes.isNotBlank() && courseKm.isNotBlank()
+
         Button(
-            onClick = onValidateClick,
+            onClick = { onValidateClick(pompes, courseKm) },
+            enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black

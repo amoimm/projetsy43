@@ -86,7 +86,10 @@ fun PersonalInfoScreen(
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_age),
                 value = age,
-                onValueChange = { age = it },
+                onValueChange = { input -> 
+                    // On filtre pour ne garder que les chiffres, ce qui permet d'effacer les lettres existantes
+                    age = input.filter { it.isDigit() }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -95,8 +98,12 @@ fun PersonalInfoScreen(
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_weight),
                 value = weight,
-                onValueChange = { weight = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                        weight = input.replace(',', '.')
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -104,19 +111,28 @@ fun PersonalInfoScreen(
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_height),
                 value = height,
-                onValueChange = { height = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                        height = input.replace(',', '.')
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
+
+        val isFormValid = name.isNotBlank() && age.isNotBlank() && weight.isNotBlank() && height.isNotBlank()
 
         Button(
             onClick = {
                 val profil = UserProfile(name, age, weight, height)
                 onValidateClick(profil)
             },
+            enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
-                contentColor = Color.Black
+                contentColor = Color.Black,
+                disabledContainerColor = Color.Gray,
+                disabledContentColor = Color.DarkGray
             ),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier

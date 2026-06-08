@@ -23,23 +23,54 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentDataType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
+import com.example.application.UserProfile
+import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.theme.ApplicationTheme
+import kotlin.text.format
+import java.text.SimpleDateFormat
+
+fun generateTodolist(motivation : Float, maxpushups : Int, maxkm : Float): ToDoList {
+    //TEST A VOIR CETTE FONCTION
+    val ratio = 0.3f + (motivation * 0.7f)
+
+    val pushupGoal = (maxpushups * ratio).toInt().coerceAtLeast(5)
+    val runningGoal = String.format("%.1f", (maxkm * ratio).coerceAtLeast(1.0))
+
+    // Création des titres selon la motivation
+    val title = when {
+        motivation > 0.8f -> "Heroic Day"
+        motivation > 0.5f -> "Solid Effort"
+        else -> "Soft Restart"
+    }
+
+    // Formatage pour votre système activitiesJson : "categorie,valeur,isDone;..."
+    val activities = "Push up,$pushupGoal,false;Running,$runningGoal,false"
+
+    return ToDoList(
+        title = title,
+        date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(ContentDataType.Companion.Date()),
+        activitiesJson = activities
+    )
+}
 
 @Composable
 fun HowYouFeelScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit = {}
+    userProfile: UserProfile?,
+    onValidateClick: (ToDoList) -> Unit
 ) {
     // Mutable variable to remember the fill percentage
     var fillPercentage by remember { mutableStateOf(0.5f) }
@@ -153,7 +184,13 @@ fun HowYouFeelScreen(
         }
 
         Button(
-            onClick = onValidateClick,
+            onClick = {
+                val maxP = userProfile?.maxPushups?.toIntOrNull() ?: 20
+                val maxK = userProfile?.maxRunningKm?.toDoubleOrNull() ?: 5.0
+
+                val autoList = generateTodolist(fillPercentage, maxP, maxK)
+                onValidateClick(autoList)
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black
