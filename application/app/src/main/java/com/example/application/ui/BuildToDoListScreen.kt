@@ -21,9 +21,6 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
-//FOR BDD
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.bdd.ActiviteSportive
 
@@ -40,7 +37,11 @@ fun BuildToDoListScreen(
     var valeurSaisie by remember { mutableStateOf("") }
     var compteurId by remember { mutableIntStateOf(0) }
 
-    var dateSelectionnee by remember { mutableStateOf("Select a date") }
+    var frequency by remember { mutableStateOf("ONCE") }
+    val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "All week")
+    var selectedDay by remember { mutableStateOf("Monday") }
+
+    var dateSelectionnee by remember { mutableStateOf(SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())) }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
@@ -82,132 +83,172 @@ fun BuildToDoListScreen(
                     tint = Color.White
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Create To-Do List",
-                color = Color.White,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 24.dp, top = 32.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = titleSaisie,
-                        onValueChange = { titleSaisie = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("List Title", color = Color.Gray) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF1565C0),
-                            unfocusedBorderColor = Color.Gray
-                        ),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("Due Date :", fontWeight = FontWeight.SemiBold, color = Color.White)
-                    OutlinedButton(
-                        onClick = { showDatePicker = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color(0xFF2C2C2C),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text(text = dateSelectionnee)
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("Add Activity :", fontWeight = FontWeight.SemiBold, color = Color.White)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                categorieSelectionnee = "Push up"
-                                valeurSaisie = ""
-                                      },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (categorieSelectionnee == "Push up") Color(0xFF1565C0) else Color.Gray
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) { Text("Push up", color = Color.White) }
-                        Button(
-                            onClick = {
-                                categorieSelectionnee = "Running"
-                                valeurSaisie = ""
-                                      },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (categorieSelectionnee == "Running") Color(0xFF1565C0) else Color.Gray
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) { Text("Running", color = Color.White) }
-                    }
-
-                    OutlinedTextField(
-                        value = valeurSaisie,
-                        onValueChange = { input ->
-                            if (categorieSelectionnee == "Running") {
-                                if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
-                                    valeurSaisie = input.replace(',', '.')
-                                }
-                            } else {
-                                if (input.all { it.isDigit() }) {
-                                    valeurSaisie = input
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Goal (reps or km)", color = Color.Gray) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF1565C0),
-                            unfocusedBorderColor = Color.Gray
-                        ),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-
-                    Button(
-                        onClick = {
-                            if (valeurSaisie.isNotBlank()) {
-                                listeActivites = listeActivites + ActiviteSportive(compteurId++, categorieSelectionnee, valeurSaisie)
-                                valeurSaisie = ""
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
-                    ) {
-                        Text("Add to current list")
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(bottom = 100.dp)
             ) {
+                item {
+                    Text(
+                        text = "Create To-Do List",
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            OutlinedTextField(
+                                value = titleSaisie,
+                                onValueChange = { titleSaisie = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("List Title", color = Color.Gray) },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedBorderColor = Color(0xFF1565C0),
+                                    unfocusedBorderColor = Color.Gray
+                                ),
+                                singleLine = true
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text("Frequency :", fontWeight = FontWeight.SemiBold, color = Color.White)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val frequencies = listOf("ONCE" to "Once", "DAILY" to "Daily", "WEEKLY" to "Weekly")
+                                frequencies.forEach { (key, label) ->
+                                    Button(
+                                        onClick = { frequency = key },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (frequency == key) Color(0xFF1565C0) else Color.Gray
+                                        ),
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) {
+                                        Text(label, fontSize = 12.sp, color = Color.White)
+                                    }
+                                }
+                            }
+
+                            if (frequency == "ONCE") {
+                                Text("Select Date :", fontWeight = FontWeight.SemiBold, color = Color.White)
+                                OutlinedButton(
+                                    onClick = { showDatePicker = true },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFF2C2C2C), contentColor = Color.White)
+                                ) {
+                                    Text(text = dateSelectionnee)
+                                }
+                            } else if (frequency == "WEEKLY") {
+                                Text("Select Day :", fontWeight = FontWeight.SemiBold, color = Color.White)
+                                var expandedDays by remember { mutableStateOf(false) }
+                                ExposedDropdownMenuBox(
+                                    expanded = expandedDays,
+                                    onExpandedChange = { expandedDays = !expandedDays },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedDay,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDays) },
+                                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White,
+                                            focusedContainerColor = Color(0xFF2C2C2C),
+                                            unfocusedContainerColor = Color(0xFF2C2C2C)
+                                        )
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = expandedDays,
+                                        onDismissRequest = { expandedDays = false }
+                                    ) {
+                                        daysOfWeek.forEach { day ->
+                                            DropdownMenuItem(
+                                                text = { Text(day) },
+                                                onClick = {
+                                                    selectedDay = day
+                                                    expandedDays = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider(color = Color.DarkGray)
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text("Add Activity :", fontWeight = FontWeight.SemiBold, color = Color.White)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf("Push up", "Running").forEach { cat ->
+                                    Button(
+                                        onClick = {
+                                            categorieSelectionnee = cat
+                                            valeurSaisie = ""
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (categorieSelectionnee == cat) Color(0xFF1565C0) else Color.Gray
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    ) { Text(cat, color = Color.White) }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value = valeurSaisie,
+                                onValueChange = { input ->
+                                    if (categorieSelectionnee == "Running") {
+                                        if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                                            valeurSaisie = input.replace(',', '.')
+                                        }
+                                    } else {
+                                        if (input.all { it.isDigit() }) {
+                                            valeurSaisie = input
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Goal (reps or km)", color = Color.Gray) },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedBorderColor = Color(0xFF1565C0),
+                                    unfocusedBorderColor = Color.Gray
+                                ),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true
+                            )
+
+                            Button(
+                                onClick = {
+                                    if (valeurSaisie.isNotBlank()) {
+                                        listeActivites = listeActivites + ActiviteSportive(compteurId++, categorieSelectionnee, valeurSaisie)
+                                        valeurSaisie = ""
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                            ) {
+                                Text("Add Activity")
+                            }
+                        }
+                    }
+                }
+
                 items(listeActivites) { activite ->
                     ActiviteItem(activite)
                 }
@@ -218,13 +259,15 @@ fun BuildToDoListScreen(
             onClick = { 
                 if (titleSaisie.isNotBlank() && listeActivites.isNotEmpty()) {
                     val activitiesString = listeActivites.joinToString(";") {
-                        "${it.categorie},${it.valeur},${it.isDone}"
+                        "${it.categorie},${it.valeur},${it.isDone},${it.progress}"
                     }
                     onValidateClick(
                         ToDoList(
                             title = titleSaisie,
-                            date = dateSelectionnee,
-                            activitiesJson = activitiesString
+                            date = if (frequency == "ONCE") dateSelectionnee else "",
+                            activitiesJson = activitiesString,
+                            frequency = frequency,
+                            targetDays = if (frequency == "WEEKLY") selectedDay else ""
                         )
                     )
                 }
@@ -237,7 +280,7 @@ fun BuildToDoListScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+                .padding(24.dp)
                 .height(56.dp)
         ) {
             Text(text = "Finish my to-do list", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -248,19 +291,16 @@ fun BuildToDoListScreen(
 @Composable
 fun ActiviteItem(activite: ActiviteSportive) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
     ) {
         Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = activite.categorie, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
-
             val suffixe = if (activite.categorie == "Running") "km" else "reps"
             Text(text = "${activite.valeur} $suffixe", fontSize = 18.sp, color = Color.LightGray)
         }

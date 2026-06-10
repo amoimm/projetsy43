@@ -59,7 +59,7 @@ fun CapaciteScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             InfoInputField(
-                label = stringResource(id = R.string.capacity_info_pompes) + " (Max)",
+                label = stringResource(id = R.string.capacity_info_pompes) + " (Max without a break)",
                 value = pompes,
                 onValueChange = { if (it.all { char -> char.isDigit() }) pompes = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -68,7 +68,7 @@ fun CapaciteScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             InfoInputField(
-                label = stringResource(id = R.string.capacity_info_courses) + " (km Max)",
+                label = stringResource(id = R.string.capacity_info_courses) + " (km Max without a break)",
                 value = courseKm,
                 onValueChange = { input ->
                     if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {

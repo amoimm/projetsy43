@@ -1,6 +1,7 @@
 package com.example.application.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -20,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.Calendar
 import java.util.Locale
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.bdd.ActiviteSportive
@@ -78,11 +81,33 @@ fun ToDoListCard(
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
-                        Text(
-                            text = toDoList.date,
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            when(toDoList.frequency) {
+                                "DAILY" -> {
+                                    Badge(containerColor = Color(0xFF1565C0)) {
+                                        Text("DAILY", color = Color.White, fontSize = 8.sp)
+                                    }
+                                }
+                                "WEEKLY" -> {
+                                    Badge(containerColor = Color(0xFF592BC4)) {
+                                        Text("WEEKLY", color = Color.White, fontSize = 8.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "(${toDoList.targetDays})",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                else -> {
+                                    Text(
+                                        text = "Due date : ${toDoList.date}",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -106,13 +131,13 @@ fun ToDoListCard(
                     )
                 }
 
-                if (toDoList.isCompleted) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (toDoList.isCompleted) {
                         IconButton(onClick = onShareClick) {
                             Icon(
                                 imageVector = Icons.Default.Share,
@@ -120,13 +145,13 @@ fun ToDoListCard(
                                 tint = Color(0xFF90CAF9)
                             )
                         }
-                        IconButton(onClick = onDeleteClick) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
-                                tint = Color(0xFFEF5350)
-                            )
-                        }
+                    }
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color(0xFFEF5350)
+                        )
                     }
                 }
             }
@@ -191,6 +216,41 @@ fun ActivityRow(
 }
 
 @Composable
+fun SectionHeader(
+    title: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle() }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(Color.DarkGray.copy(alpha = 0.5f))
+        )
+        Icon(
+            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+            contentDescription = null,
+            tint = Color.Gray,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+@Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
     toDoLists: List<ToDoList> = emptyList(),
@@ -198,18 +258,22 @@ fun MainScreen(
     onDeleteClick: (ToDoList) -> Unit = {},
     onShareClick: (ToDoList) -> Unit = {}
 ) {
-    val expandedIds = remember { mutableStateListOf<Int>() }
+    val expandedCardIds = remember { mutableStateListOf<Int>() }
+    
+    // States for section expansion
+    var dailyExpanded by remember { mutableStateOf(true) }
+    var weeklyExpanded by remember { mutableStateOf(true) }
+    var onceExpanded by remember { mutableStateOf(true) }
 
-    val sortedToDoLists = remember(toDoLists) {
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        toDoLists.sortedByDescending { list ->
-            try {
-                dateFormat.parse(list.date)
-            } catch (e: Exception) {
-                Date(0)
-            }
-        }
-    }
+    // Filter and Group
+    val calendar = Calendar.getInstance()
+    val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH)
+
+    val dailyLists = toDoLists.filter { it.frequency == "DAILY" }.sortedByDescending { it.id }
+    val weeklyLists = toDoLists.filter {
+        it.frequency == "WEEKLY" && (it.targetDays == "All week" || it.targetDays == currentDay)
+    }.sortedByDescending { it.id }
+    val onceLists = toDoLists.filter { it.frequency == "ONCE" }.sortedByDescending { it.id }
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -224,36 +288,103 @@ fun MainScreen(
                 modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 16.dp)
             )
 
-            if (sortedToDoLists.isEmpty()) {
+            if (toDoLists.isEmpty()) {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No To-Do Lists created", color = Color.Gray)
+                    Text("No lists created yet", color = Color.Gray)
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(vertical = 8.dp)
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
-                    items(sortedToDoLists, key = { it.id }) { toDoList ->
-                        ToDoListCard(
-                            toDoList = toDoList,
-                            isExpanded = expandedIds.contains(toDoList.id),
-                            onExpandClick = {
-                                if (expandedIds.contains(toDoList.id)) {
-                                    expandedIds.remove(toDoList.id)
-                                } else {
-                                    expandedIds.add(toDoList.id)
-                                }
-                            },
-                            onActivityPlayClick = { activityIndex ->
-                                val originalIndex = toDoLists.indexOf(toDoList)
-                                onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
-                            },
-                            onDeleteClick = { onDeleteClick(toDoList) },
-                            onShareClick = { onShareClick(toDoList) }
-                        )
+                    // DAILY Section
+                    if (dailyLists.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "DAILY",
+                                isExpanded = dailyExpanded,
+                                onToggle = { dailyExpanded = !dailyExpanded }
+                            )
+                        }
+                        if (dailyExpanded) {
+                            items(dailyLists, key = { "daily_${it.id}" }) { toDoList ->
+                                ToDoListCard(
+                                    toDoList = toDoList,
+                                    isExpanded = expandedCardIds.contains(toDoList.id),
+                                    onExpandClick = {
+                                        if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
+                                        else expandedCardIds.add(toDoList.id)
+                                    },
+                                    onActivityPlayClick = { activityIndex ->
+                                        val originalIndex = toDoLists.indexOf(toDoList)
+                                        onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                    },
+                                    onDeleteClick = { onDeleteClick(toDoList) },
+                                    onShareClick = { onShareClick(toDoList) }
+                                )
+                            }
+                        }
+                    }
+
+                    // WEEKLY Section
+                    if (weeklyLists.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "WEEKLY",
+                                isExpanded = weeklyExpanded,
+                                onToggle = { weeklyExpanded = !weeklyExpanded }
+                            )
+                        }
+                        if (weeklyExpanded) {
+                            items(weeklyLists, key = { "weekly_${it.id}" }) { toDoList ->
+                                ToDoListCard(
+                                    toDoList = toDoList,
+                                    isExpanded = expandedCardIds.contains(toDoList.id),
+                                    onExpandClick = {
+                                        if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
+                                        else expandedCardIds.add(toDoList.id)
+                                    },
+                                    onActivityPlayClick = { activityIndex ->
+                                        val originalIndex = toDoLists.indexOf(toDoList)
+                                        onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                    },
+                                    onDeleteClick = { onDeleteClick(toDoList) },
+                                    onShareClick = { onShareClick(toDoList) }
+                                )
+                            }
+                        }
+                    }
+
+                    // ONCE Section
+                    if (onceLists.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "ONCE",
+                                isExpanded = onceExpanded,
+                                onToggle = { onceExpanded = !onceExpanded }
+                            )
+                        }
+                        if (onceExpanded) {
+                            items(onceLists, key = { "once_${it.id}" }) { toDoList ->
+                                ToDoListCard(
+                                    toDoList = toDoList,
+                                    isExpanded = expandedCardIds.contains(toDoList.id),
+                                    onExpandClick = {
+                                        if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
+                                        else expandedCardIds.add(toDoList.id)
+                                    },
+                                    onActivityPlayClick = { activityIndex ->
+                                        val originalIndex = toDoLists.indexOf(toDoList)
+                                        onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                    },
+                                    onDeleteClick = { onDeleteClick(toDoList) },
+                                    onShareClick = { onShareClick(toDoList) }
+                                )
+                            }
+                        }
                     }
                 }
             }

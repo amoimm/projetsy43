@@ -25,7 +25,9 @@ data class ToDoList(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val title: String,
     val date: String,
-    val activitiesJson: String
+    val activitiesJson: String,
+    val frequency: String = "ONCE", // "ONCE", "DAILY", "WEEKLY"
+    val targetDays: String = ""      // "Monday,Tuesday..." or "All Week"
 ) {
     val activities: List<ActiviteSportive> get() {
         if (activitiesJson.isBlank()) return emptyList()
