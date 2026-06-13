@@ -1,23 +1,13 @@
 package com.example.application.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,11 +23,13 @@ import com.example.application.ui.theme.ApplicationTheme
 @Composable
 fun CapaciteScreen(
     modifier: Modifier = Modifier,
-    onValidateClick: () -> Unit = {}
+    initialPushups: String = "",
+    initialRunningKm: String = "",
+    onBackClick: () -> Unit = {},
+    onValidateClick: (String, String) -> Unit = { _, _ -> }
 ) {
-
-    var pompes by remember { mutableStateOf("") }
-    var courseKm by remember { mutableStateOf("") }
+    var pompes by remember(initialPushups) { mutableStateOf(initialPushups) }
+    var courseKm by remember(initialRunningKm) { mutableStateOf(initialRunningKm) }
 
     Box(
         modifier = modifier
@@ -45,10 +37,16 @@ fun CapaciteScreen(
             .background(Color.Black)
             .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            IconButton(onClick = onBackClick, modifier = Modifier.padding(bottom = 8.dp)) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
             Text(
                 text = stringResource(id = R.string.capacity_info_title),
                 color = Color.White,
@@ -59,28 +57,32 @@ fun CapaciteScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             InfoInputField(
-                label = stringResource(id = R.string.capacity_info_pompes) + " (Max)",
+                label = stringResource(id = R.string.capacity_info_pompes) + " (Max without a break)",
                 value = pompes,
-                onValueChange = { pompes = it },
+                onValueChange = { if (it.all { char -> char.isDigit() }) pompes = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             InfoInputField(
-                label = stringResource(id = R.string.capacity_info_courses) + " (km Max)",
+                label = stringResource(id = R.string.capacity_info_courses) + " (km Max without a break)",
                 value = courseKm,
-                onValueChange = { courseKm = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                        courseKm = input.replace(',', '.')
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
 
+        val isFormValid = pompes.isNotBlank() && courseKm.isNotBlank()
+
         Button(
-            onClick = onValidateClick,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            ),
+            onClick = { onValidateClick(pompes, courseKm) },
+            enabled = isFormValid,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,19 +90,7 @@ fun CapaciteScreen(
                 .padding(bottom = 16.dp)
                 .height(56.dp)
         ) {
-            Text(
-                text = stringResource(id = R.string.personal_info_validate),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = stringResource(id = R.string.personal_info_validate), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun CapaciteScreenPreview() {
-    ApplicationTheme {
-        CapaciteScreen()
     }
 }

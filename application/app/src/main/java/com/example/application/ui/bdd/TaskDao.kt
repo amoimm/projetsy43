@@ -25,4 +25,24 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET isDone = :isDone WHERE id = :id")
     suspend fun updateTaskStatus(id: Int, isDone: Boolean)
+
+    // ToDoLists
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertToDoList(toDoList: ToDoList)
+
+    @Query("SELECT * FROM todo_lists")
+    fun getAllLists(): Flow<List<ToDoList>>
+
+    @Delete
+    suspend fun deleteToDoList(toDoList: ToDoList)
+
+    // Ads
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAd(ad: Ad)
+
+    @Query("SELECT * FROM ads ORDER BY triggerLocation ASC")
+    fun getAllAds(): Flow<List<Ad>>
+
+    @Delete
+    suspend fun deleteAd(ad: Ad)
 }

@@ -1,26 +1,13 @@
 package com.example.application.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
 import com.example.application.ui.theme.ApplicationTheme
-import com.example.application.UserProfile
 
 @Composable
 fun PersonalInfoScreen(
@@ -41,20 +27,13 @@ fun PersonalInfoScreen(
     initialAge: String = "",
     initialWeight: String = "",
     initialHeight: String = "",
-    onValidateClick: (UserProfile) -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onValidateClick: (name: String, age: String, weight: String, height: String) -> Unit = { _, _, _, _ -> }
 ) {
-    var name by remember { mutableStateOf(initialName) }
-    var age by remember { mutableStateOf(initialAge) }
-    var weight by remember { mutableStateOf(initialWeight) }
-    var height by remember { mutableStateOf(initialHeight) }
-
-    // if change -> update on screen
-    LaunchedEffect(initialName, initialAge, initialWeight, initialHeight) {
-        if (name.isEmpty()) name = initialName
-        if (age.isEmpty()) age = initialAge
-        if (weight.isEmpty()) weight = initialWeight
-        if (height.isEmpty()) height = initialHeight
-    }
+    var name by remember(initialName) { mutableStateOf(initialName) }
+    var age by remember(initialAge) { mutableStateOf(initialAge) }
+    var weight by remember(initialWeight) { mutableStateOf(initialWeight) }
+    var height by remember(initialHeight) { mutableStateOf(initialHeight) }
 
     Box(
         modifier = modifier
@@ -62,10 +41,16 @@ fun PersonalInfoScreen(
             .background(Color.Black)
             .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            IconButton(onClick = onBackClick, modifier = Modifier.padding(bottom = 8.dp)) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
             Text(
                 text = stringResource(id = R.string.personal_info_title),
                 color = Color.White,
@@ -73,7 +58,7 @@ fun PersonalInfoScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_name),
@@ -86,7 +71,7 @@ fun PersonalInfoScreen(
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_age),
                 value = age,
-                onValueChange = { age = it },
+                onValueChange = { age = it.filter { char -> char.isDigit() } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -95,8 +80,12 @@ fun PersonalInfoScreen(
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_weight),
                 value = weight,
-                onValueChange = { weight = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                        weight = input.replace(',', '.')
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -104,19 +93,24 @@ fun PersonalInfoScreen(
             InfoInputField(
                 label = stringResource(id = R.string.personal_info_height),
                 value = height,
-                onValueChange = { height = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                        height = input.replace(',', '.')
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
 
+        val isFormValid = name.isNotBlank() && age.isNotBlank() && weight.isNotBlank() && height.isNotBlank()
+
         Button(
-            onClick = {
-                val profil = UserProfile(name, age, weight, height)
-                onValidateClick(profil)
-            },
+            onClick = { onValidateClick(name, age, weight, height) },
+            enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
-                contentColor = Color.Black
+                contentColor = Color.Black,
+                disabledContainerColor = Color.Gray
             ),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -168,13 +162,5 @@ fun InfoInputField(
             keyboardOptions = keyboardOptions,
             singleLine = true
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PersonalInfoScreenPreview() {
-    ApplicationTheme {
-        PersonalInfoScreen()
     }
 }

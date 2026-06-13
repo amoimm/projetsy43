@@ -1,6 +1,7 @@
 package com.example.application.ui.bdd
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,5 +33,26 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
         viewModelScope.launch {
             taskRepository.updateTaskStatus(id, isDone)
         }
+    }
+
+    val allToDoLists = taskRepository.allToDoLists.asLiveData()
+
+    fun insertToDoList(list: ToDoList) = viewModelScope.launch {
+        taskRepository.insertToDoList(list)
+    }
+
+    fun deleteToDoList(list: ToDoList) = viewModelScope.launch {
+        taskRepository.deleteToDoList(list)
+    }
+
+    // Ads logic
+    val allAds = taskRepository.allAds.asLiveData()
+
+    fun insertAd(ad: Ad) = viewModelScope.launch {
+        taskRepository.insertAd(ad)
+    }
+
+    fun deleteAd(ad: Ad) = viewModelScope.launch {
+        taskRepository.deleteAd(ad)
     }
 }

@@ -10,4 +10,13 @@ interface TaskRepository {
     suspend fun updateTask(task: Task)
     suspend fun updateTaskStatus(id: Int, isDone: Boolean)
     suspend fun deleteAllTasks()
+
+    val allToDoLists: Flow<List<ToDoList>>
+    suspend fun insertToDoList(list: ToDoList)
+    suspend fun deleteToDoList(list: ToDoList)
+
+    // Ads
+    val allAds: Flow<List<Ad>>
+    suspend fun insertAd(ad: Ad)
+    suspend fun deleteAd(ad: Ad)
 }

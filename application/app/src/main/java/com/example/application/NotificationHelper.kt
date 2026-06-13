@@ -6,9 +6,44 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import kotlin.random.Random
 
 object NotificationHelper {
     private const val CHANNEL_ID = "exercise_reminder"
+
+    // Liste de textes interchangeables
+    private val motivationTexts = listOf(
+        "Last chance for your streak!",
+        "He's watching you...",
+        "Sports don't wait!",
+        "Get moving now!",
+        "Your progress is at risk!",
+        "A little effort goes a long way!",
+        "No excuses today!",
+        "Become the best version of yourself!",
+        "Today's workout is waiting for you!",
+        "Stay disciplined, stay strong!"
+    )
+
+    // List of images to put in the notifications
+    private val motivationImages = listOf(
+        R.drawable.motivation1,
+        R.drawable.motivation2,
+        R.drawable.motivation3,
+        R.mipmap.ic_launcher // Default image if no other image is found
+    )
+
+    fun showRandomNotification(context: Context) {
+        // Mix them up and take two different texts
+        val shuffledTexts = motivationTexts.shuffled()
+        val title = shuffledTexts[0]
+        val message = shuffledTexts[1]
+        
+        // We choose a random image
+        val randomImage = motivationImages[Random.nextInt(motivationImages.size)]
+        
+        showReminderNotification(context, title, message, randomImage)
+    }
 
     fun showReminderNotification(context: Context, title: String? = null, message: String? = null, imageResId: Int? = null) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -24,15 +59,18 @@ object NotificationHelper {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // On utilise l'image fournie ou le launcher par défaut
         val imageToDisplay = imageResId ?: R.mipmap.ic_launcher
-        val bitmap = BitmapFactory.decodeResource(context.resources, imageToDisplay)
+        val bitmap = try {
+            BitmapFactory.decodeResource(context.resources, imageToDisplay)
+        } catch (e: Exception) {
+            BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
+        }
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setLargeIcon(bitmap)
-            .setContentTitle(title ?: "Last chance to save your streak!")
-            .setContentText(message ?: "Practice your exercises now or lose your progress!")
+            .setContentTitle(title ?: "Don't stop now")
+            .setContentText(message ?: "Practice your exercises or lose your progress!")
             .setStyle(NotificationCompat.BigPictureStyle()
                 .bigPicture(bitmap)
                 .bigLargeIcon(null as android.graphics.Bitmap?))
