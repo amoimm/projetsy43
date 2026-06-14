@@ -96,26 +96,31 @@ fun RunningScreen(
 
     if (permissionsGranted) {
         DisposableEffect(fusedLocationClient) {
-            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000)
-                .setMinUpdateIntervalMillis(1000)
+            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 750)
+                .setMinUpdateIntervalMillis(750)
                 .build()
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     for (location in locationResult.locations) {
+                        // Ignore inaccurate points (bad signal)
+                        if (location.accuracy > 22f) continue
+
                         val newPoint = GeoPoint(location.latitude, location.longitude)
                         currentSpeed = location.speed * 3.6f
                         
                         lastLocation?.let { last ->
                             val distanceInMeters = last.distanceTo(location)
-                            if (distanceInMeters > 1.5) {
+                            // Filter out micro-movements (GPS vibration when stationary)
+                            if (distanceInMeters > 2.0) {
                                 totalDistance += distanceInMeters / 1000f
                                 pathPoints.add(newPoint)
+                                lastLocation = location
                             }
                         } ?: run {
                             pathPoints.add(newPoint)
+                            lastLocation = location
                         }
-                        lastLocation = location
                     }
                 }
             }

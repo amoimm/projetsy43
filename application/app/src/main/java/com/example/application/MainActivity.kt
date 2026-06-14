@@ -98,10 +98,16 @@ class MainActivity : ComponentActivity() {
                 val userProfileData by userProfileFlow.collectAsState(initial = null)
                 var currentScreen by remember { mutableStateOf("loading") }
 
-                // Always start with Welcome Screen (Hello)
+                // Setting the startup screen with animation logic
                 LaunchedEffect(userProfileData) {
                     if (userProfileData != null && currentScreen == "loading") {
-                        currentScreen = "welcome"
+                        if (userProfileData!!.hasCompletedOnboarding) {
+                            currentScreen = "welcome_back"
+                            delay(2500)
+                            currentScreen = "Main"
+                        } else {
+                            currentScreen = "welcome"
+                        }
                     }
                 }
 
@@ -134,6 +140,21 @@ class MainActivity : ComponentActivity() {
                     ) { targetScreen ->
                         when (targetScreen) {
                             "loading" -> { Box(modifier = Modifier.fillMaxSize().background(Color.Black)) }
+                            "welcome_back" -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Welcome back !",
+                                        color = Color.White,
+                                        fontSize = 48.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                             "welcome" -> WelcomeScreen(modifier = Modifier.padding(innerPadding), onContinueClick = { currentScreen = "mode_selection" })
                             "mode_selection" -> ModeSelectionScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -161,7 +182,13 @@ class MainActivity : ComponentActivity() {
                             )
                             "partner_dashboard" -> PartnerDashboardScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onBackClick = { currentScreen = "welcome" },
+                                onBackClick = { 
+                                    coroutineScope.launch {
+                                        currentScreen = "welcome_back"
+                                        delay(2500)
+                                        currentScreen = "mode_selection"
+                                    }
+                                },
                                 onSettingsClick = { currentScreen = "partner_info" },
                                 onMyAdsClick = { currentScreen = "my_ads" }
                             )
@@ -228,24 +255,31 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { currentScreen = "Main" },
                                 onValidateClick = { newList ->
                                     taskViewModel.insertToDoList(newList)
-                                    triggerAd("AFTER_LIST", "Main")
+                                    // Navigate with a flag to trigger the success message
+                                    triggerAd("AFTER_LIST", "Main?created=true")
                                 }
                             )
-                            "Main" -> MainScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                toDoLists = toDoLists,
-                                onValidateClick = { location ->
-                                    if (location.contains("|")) {
-                                        val parts = location.split("|")
-                                        currentScreen = parts[0].replace(" ", "")
-                                        activeListIndex = parts[1].toInt()
-                                        activeActivityIndex = parts[2].toInt()
-                                    } else currentScreen = location
-                                },
-                                onDeleteClick = { list -> taskViewModel.deleteToDoList(list) },
-                                onSettingsClick = { currentScreen = "personal_info" },
-                                onLogoutClick = { currentScreen = "mode_selection" }
-                            )
+                            "Main", "Main?created=true" -> {
+                                val isJustCreated = targetScreen == "Main?created=true"
+                                MainScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    toDoLists = toDoLists,
+                                    justCreated = isJustCreated,
+                                    onValidateClick = { location ->
+                                        if (location.contains("|")) {
+                                            val parts = location.split("|")
+                                            currentScreen = parts[0].replace(" ", "")
+                                            activeListIndex = parts[1].toInt()
+                                            activeActivityIndex = parts[2].toInt()
+                                        } else {
+                                            currentScreen = location
+                                        }
+                                    },
+                                    onDeleteClick = { list -> taskViewModel.deleteToDoList(list) },
+                                    onSettingsClick = { currentScreen = "personal_info" },
+                                    onLogoutClick = { currentScreen = "mode_selection" }
+                                )
+                            }
                             "PushupScreen" -> {
                                 val (target, initialProgress) = remember(activeListIndex, activeActivityIndex, toDoLists) {
                                     try {

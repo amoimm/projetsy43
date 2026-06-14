@@ -1,5 +1,7 @@
 package com.example.application.ui
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.text.SimpleDateFormat
+import kotlinx.coroutines.delay
 import java.util.Calendar
 import java.util.Locale
 import com.example.application.ui.bdd.ToDoList
@@ -91,13 +93,17 @@ fun ToDoListCard(
                                     }
                                 }
                                 "WEEKLY" -> {
-                                    Badge(containerColor = Color(0xFF592BC4)) {
+                                    val calendar = Calendar.getInstance()
+                                    val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH)
+                                    val isForToday = toDoList.targetDays == "All week" || toDoList.targetDays == currentDay
+                                    
+                                    Badge(containerColor = if (isForToday) Color(0xFF592BC4) else Color.DarkGray) {
                                         Text("WEEKLY", color = Color.White, fontSize = 8.sp)
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "(${toDoList.targetDays})",
-                                        color = Color.Gray,
+                                        color = if (isForToday) Color.Gray else Color.DarkGray,
                                         fontSize = 12.sp
                                     )
                                 }
@@ -256,6 +262,7 @@ fun SectionHeader(
 fun MainScreen(
     modifier: Modifier = Modifier,
     toDoLists: List<ToDoList> = emptyList(),
+    justCreated: Boolean = false,
     onValidateClick: (String) -> Unit = {},
     onDeleteClick: (ToDoList) -> Unit = {},
     onShareClick: (ToDoList) -> Unit = {},
@@ -263,6 +270,17 @@ fun MainScreen(
     onLogoutClick: () -> Unit = {}
 ) {
     val expandedCardIds = remember { mutableStateListOf<Int>() }
+    
+    // Toast state
+    var showToast by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(justCreated) {
+        if (justCreated) {
+            showToast = true
+            delay(3000)
+            showToast = false
+        }
+    }
     
     // States for section expansion
     var dailyExpanded by remember { mutableStateOf(true) }
@@ -274,161 +292,203 @@ fun MainScreen(
     val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH)
 
     val dailyLists = toDoLists.filter { it.frequency == "DAILY" }.sortedByDescending { it.id }
-    val weeklyLists = toDoLists.filter {
-        it.frequency == "WEEKLY" && (it.targetDays == "All week" || it.targetDays == currentDay)
-    }.sortedByDescending { it.id }
+    val weeklyLists = toDoLists.filter { it.frequency == "WEEKLY" }.sortedByDescending { it.id }
     val onceLists = toDoLists.filter { it.frequency == "ONCE" }.sortedByDescending { it.id }
 
     Surface(
         modifier = modifier.fillMaxSize(),
         color = Color.Black
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "My To-Do Lists",
-                    color = Color.White,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "My To-Do Lists",
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onSettingsClick) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                        IconButton(onClick = onLogoutClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Switch Mode",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
-                    IconButton(onClick = onLogoutClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Switch Mode",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                }
+
+                if (toDoLists.isEmpty()) {
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No lists created yet", color = Color.Gray)
                     }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        // DAILY Section
+                        if (dailyLists.isNotEmpty()) {
+                            item {
+                                SectionHeader(
+                                    title = "DAILY",
+                                    isExpanded = dailyExpanded,
+                                    onToggle = { dailyExpanded = !dailyExpanded }
+                                )
+                            }
+                            if (dailyExpanded) {
+                                items(dailyLists, key = { "daily_${it.id}" }) { toDoList ->
+                                    ToDoListCard(
+                                        toDoList = toDoList,
+                                        isExpanded = expandedCardIds.contains(toDoList.id),
+                                        onExpandClick = {
+                                            if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
+                                            else expandedCardIds.add(toDoList.id)
+                                        },
+                                        onActivityPlayClick = { activityIndex ->
+                                            val originalIndex = toDoLists.indexOf(toDoList)
+                                            onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                        },
+                                        onDeleteClick = { onDeleteClick(toDoList) },
+                                        onShareClick = { onShareClick(toDoList) }
+                                    )
+                                }
+                            }
+                        }
+
+                        // WEEKLY Section
+                        if (weeklyLists.isNotEmpty()) {
+                            item {
+                                SectionHeader(
+                                    title = "WEEKLY",
+                                    isExpanded = weeklyExpanded,
+                                    onToggle = { weeklyExpanded = !weeklyExpanded }
+                                )
+                            }
+                            if (weeklyExpanded) {
+                                items(weeklyLists, key = { "weekly_${it.id}" }) { toDoList ->
+                                    ToDoListCard(
+                                        toDoList = toDoList,
+                                        isExpanded = expandedCardIds.contains(toDoList.id),
+                                        onExpandClick = {
+                                            if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
+                                            else expandedCardIds.add(toDoList.id)
+                                        },
+                                        onActivityPlayClick = { activityIndex ->
+                                            val originalIndex = toDoLists.indexOf(toDoList)
+                                            onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                        },
+                                        onDeleteClick = { onDeleteClick(toDoList) },
+                                        onShareClick = { onShareClick(toDoList) }
+                                    )
+                                }
+                            }
+                        }
+
+                        // ONCE Section
+                        if (onceLists.isNotEmpty()) {
+                            item {
+                                SectionHeader(
+                                    title = "ONCE",
+                                    isExpanded = onceExpanded,
+                                    onToggle = { onceExpanded = !onceExpanded }
+                                )
+                            }
+                            if (onceExpanded) {
+                                items(onceLists, key = { "once_${it.id}" }) { toDoList ->
+                                    ToDoListCard(
+                                        toDoList = toDoList,
+                                        isExpanded = expandedCardIds.contains(toDoList.id),
+                                        onExpandClick = {
+                                            if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
+                                            else expandedCardIds.add(toDoList.id)
+                                        },
+                                        onActivityPlayClick = { activityIndex ->
+                                            val originalIndex = toDoLists.indexOf(toDoList)
+                                            onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                        },
+                                        onDeleteClick = { onDeleteClick(toDoList) },
+                                        onShareClick = { onShareClick(toDoList) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = { onValidateClick("Build_ToDo_List") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Add new list", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            if (toDoLists.isEmpty()) {
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No lists created yet", color = Color.Gray)
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    // DAILY Section
-                    if (dailyLists.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "DAILY",
-                                isExpanded = dailyExpanded,
-                                onToggle = { dailyExpanded = !dailyExpanded }
-                            )
-                        }
-                        if (dailyExpanded) {
-                            items(dailyLists, key = { "daily_${it.id}" }) { toDoList ->
-                                ToDoListCard(
-                                    toDoList = toDoList,
-                                    isExpanded = expandedCardIds.contains(toDoList.id),
-                                    onExpandClick = {
-                                        if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
-                                        else expandedCardIds.add(toDoList.id)
-                                    },
-                                    onActivityPlayClick = { activityIndex ->
-                                        val originalIndex = toDoLists.indexOf(toDoList)
-                                        onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
-                                    },
-                                    onDeleteClick = { onDeleteClick(toDoList) },
-                                    onShareClick = { onShareClick(toDoList) }
-                                )
-                            }
-                        }
-                    }
-
-                    // WEEKLY Section
-                    if (weeklyLists.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "WEEKLY",
-                                isExpanded = weeklyExpanded,
-                                onToggle = { weeklyExpanded = !weeklyExpanded }
-                            )
-                        }
-                        if (weeklyExpanded) {
-                            items(weeklyLists, key = { "weekly_${it.id}" }) { toDoList ->
-                                ToDoListCard(
-                                    toDoList = toDoList,
-                                    isExpanded = expandedCardIds.contains(toDoList.id),
-                                    onExpandClick = {
-                                        if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
-                                        else expandedCardIds.add(toDoList.id)
-                                    },
-                                    onActivityPlayClick = { activityIndex ->
-                                        val originalIndex = toDoLists.indexOf(toDoList)
-                                        onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
-                                    },
-                                    onDeleteClick = { onDeleteClick(toDoList) },
-                                    onShareClick = { onShareClick(toDoList) }
-                                )
-                            }
-                        }
-                    }
-
-                    // ONCE Section
-                    if (onceLists.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "ONCE",
-                                isExpanded = onceExpanded,
-                                onToggle = { onceExpanded = !onceExpanded }
-                            )
-                        }
-                        if (onceExpanded) {
-                            items(onceLists, key = { "once_${it.id}" }) { toDoList ->
-                                ToDoListCard(
-                                    toDoList = toDoList,
-                                    isExpanded = expandedCardIds.contains(toDoList.id),
-                                    onExpandClick = {
-                                        if (expandedCardIds.contains(toDoList.id)) expandedCardIds.remove(toDoList.id)
-                                        else expandedCardIds.add(toDoList.id)
-                                    },
-                                    onActivityPlayClick = { activityIndex ->
-                                        val originalIndex = toDoLists.indexOf(toDoList)
-                                        onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
-                                    },
-                                    onDeleteClick = { onDeleteClick(toDoList) },
-                                    onShareClick = { onShareClick(toDoList) }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Button(
-                onClick = { onValidateClick("Build_ToDo_List") },
+            // Animated Message Overlay (Toast style)
+            AnimatedVisibility(
+                visible = showToast,
+                enter = slideInVertically(
+                    initialOffsetY = { -it },
+                    animationSpec = tween(durationMillis = 150, easing = LinearOutSlowInEasing)
+                ) + fadeIn(),
+                exit = slideOutVertically(
+                    targetOffsetY = { -it },
+                    animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing)
+                ) + fadeOut(),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
-                shape = RoundedCornerShape(12.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
             ) {
-                Text("Add new list", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Surface(
+                    color = Color(0xFF4CAF50).copy(alpha = 0.85f),
+                    shape = RoundedCornerShape(24.dp),
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "List created successfully!",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
         }
     }

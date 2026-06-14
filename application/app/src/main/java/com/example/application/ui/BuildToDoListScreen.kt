@@ -1,5 +1,6 @@
 package com.example.application.ui
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.material.icons.filled.ArrowBack
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.bdd.ActiviteSportive
 
@@ -193,7 +195,7 @@ fun BuildToDoListScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                listOf("Pushup", "Running").forEach { cat -> // Corrigé ici
+                                listOf("Pushup", "Running").forEach { cat ->
                                     Button(
                                         onClick = {
                                             categorieSelectionnee = cat
@@ -248,8 +250,29 @@ fun BuildToDoListScreen(
                     }
                 }
 
-                items(listeActivites) { activite ->
-                    ActiviteItem(activite)
+                items(listeActivites, key = { it.id }) { activite ->
+                    var isVisible by remember { mutableStateOf(true) }
+                    
+                    AnimatedVisibility(
+                        visible = isVisible,
+                        exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        ActiviteItem(
+                            activite = activite,
+                            onDeleteClick = {
+                                isVisible = false
+                            }
+                        )
+                    }
+                    
+                    // Once the exit animation is complete, the item is actually removed from the list
+                    LaunchedEffect(isVisible) {
+                        if (!isVisible) {
+                            kotlinx.coroutines.delay(300) // Durée de l'animation
+                            listeActivites = listeActivites.filter { it.id != activite.id }
+                        }
+                    }
                 }
             }
         }
@@ -288,7 +311,10 @@ fun BuildToDoListScreen(
 }
 
 @Composable
-fun ActiviteItem(activite: ActiviteSportive) {
+fun ActiviteItem(
+    activite: ActiviteSportive,
+    onDeleteClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -296,12 +322,33 @@ fun ActiviteItem(activite: ActiviteSportive) {
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = activite.categorie, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+            Text(
+                text = activite.categorie,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Color.White,
+                modifier = Modifier.weight(1f)
+            )
             val suffixe = if (activite.categorie == "Running") "km" else "reps"
-            Text(text = "${activite.valeur} $suffixe", fontSize = 18.sp, color = Color.LightGray)
+            Text(
+                text = "${activite.valeur} $suffixe",
+                fontSize = 18.sp,
+                color = Color.LightGray
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove",
+                    tint = Color.Red.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
