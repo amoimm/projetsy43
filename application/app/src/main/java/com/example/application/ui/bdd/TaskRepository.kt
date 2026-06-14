@@ -19,4 +19,11 @@ interface TaskRepository {
     val allAds: Flow<List<Ad>>
     suspend fun insertAd(ad: Ad)
     suspend fun deleteAd(ad: Ad)
+
+    // Ad Metrics
+    suspend fun insertAdMetric(metric: AdMetric)
+    fun getAdImpressions(adId: Int, startTime: Long): Flow<Int>
+    fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int>
+    fun getTotalImpressions(startTime: Long): Flow<Int>
+    fun getTotalUniqueUsers(startTime: Long): Flow<Int>
 }

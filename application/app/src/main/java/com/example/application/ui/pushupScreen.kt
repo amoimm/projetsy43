@@ -6,8 +6,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.MediaPlayer
-import android.net.Uri
-import android.widget.VideoView
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,8 +13,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,7 +22,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.example.application.R
 import kotlinx.coroutines.delay
 import kotlin.math.cos
@@ -49,7 +44,6 @@ fun PushupScreen(
 ) {
     var count by remember { mutableIntStateOf(initialCount) }
     var fontChange by remember(count) { mutableStateOf(120.sp) }
-    var showAd by remember { mutableStateOf(false) }
 
     var workoutState by remember { mutableStateOf(WorkoutState.COUNTDOWN) }
     var countdownValue by remember { mutableStateOf("5") }
@@ -153,102 +147,80 @@ fun PushupScreen(
         onDispose { sensorManager.unregisterListener(sensorListener) }
     }
 
-    if (showAd) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            AndroidView(
-                factory = { ctx ->
-                    VideoView(ctx).apply {
-                        val videoPath = "android.resource://${ctx.packageName}/${R.raw.publicite}"
-                        setVideoURI(Uri.parse(videoPath))
-                        setOnPreparedListener { 
-                            it.isLooping = true
-                            it.start() 
-                        }
-                        setOnErrorListener { _, _, _ -> onContinueClick(count); true }
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
+    Box(
+        modifier = modifier.fillMaxSize().background(Color.Black).padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (workoutState == WorkoutState.COUNTDOWN) {
+            Text(
+                text = countdownValue,
+                color = if (countdownValue == "GO !") Color.Green else Color.White,
+                fontSize = 120.sp,
+                fontWeight = FontWeight.Black
             )
-            TextButton(onClick = { onContinueClick(count) }, modifier = Modifier.align(Alignment.TopEnd).padding(top = 32.dp, end = 16.dp)) {
-                Text(stringResource(id = R.string.skip_ad), color = Color.White.copy(alpha = 0.7f))
-            }
         }
-    } else {
-        Box(
-            modifier = modifier.fillMaxSize().background(Color.Black).padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (workoutState == WorkoutState.COUNTDOWN) {
+
+        if (workoutState == WorkoutState.TRAINING) {
+            if (isCelebrating) { FireworkEffect() }
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+
                 Text(
-                    text = countdownValue,
-                    color = if (countdownValue == "GO !") Color.Green else Color.White,
-                    fontSize = 120.sp,
-                    fontWeight = FontWeight.Black
+                    text = if (count >= targetObjective) stringResource(id = R.string.goal_achieved) else stringResource(id = R.string.pushup_done),
+                    color = if (count >= targetObjective) Color.Yellow else Color.Gray,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold
                 )
+                Text(
+                    text = count.toString(),
+                    color = Color.White,
+                    fontSize = fontChange,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    onTextLayout = { if (it.hasVisualOverflow) fontChange = (fontChange.value * 0.9f).sp }
+                )
+
+                Text(
+                    text = "Objective : $targetObjective",
+                    color = Color.Gray,
+                    fontSize = 18.sp
+                )
+
+                Spacer(modifier = Modifier.weight(2f))
             }
 
-            if (workoutState == WorkoutState.TRAINING) {
-                if (isCelebrating) { FireworkEffect() }
-
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Text(
-                        text = if (count >= targetObjective) stringResource(id = R.string.goal_achieved) else stringResource(id = R.string.pushup_done),
-                        color = if (count >= targetObjective) Color.Yellow else Color.Gray,
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = count.toString(),
-                        color = Color.White,
-                        fontSize = fontChange,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        onTextLayout = { if (it.hasVisualOverflow) fontChange = (fontChange.value * 0.9f).sp }
-                    )
-
-                    Text(
-                        text = "Objective : $targetObjective",
-                        color = Color.Gray,
-                        fontSize = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.weight(2f))
-                }
-
-                Column(
-                    modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (count >= targetObjective) {
-                        Button(
-                            onClick = { showAd = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Green, contentColor = Color.Black),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Text(text = stringResource(id = R.string.validate_session), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        }
-                    } else {
-                        Button(
-                            onClick = {
-                                count++
-                                playPushupSound()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Text(text = stringResource(id = R.string.add_pushup).uppercase(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        TextButton(onClick = { onContinueClick(count) }) {
-                            Text(text = "SAVE & QUIT", color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
-                        }
+            Column(
+                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (count >= targetObjective) {
+                    Button(
+                        onClick = { onContinueClick(count) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Green, contentColor = Color.Black),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    ) {
+                        Text(text = stringResource(id = R.string.validate_session), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            count++
+                            playPushupSound()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    ) {
+                        Text(text = stringResource(id = R.string.add_pushup).uppercase(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TextButton(onClick = { onContinueClick(count) }) {
+                        Text(text = "SAVE & QUIT", color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
                     }
                 }
             }

@@ -45,4 +45,20 @@ interface TaskDao {
 
     @Delete
     suspend fun deleteAd(ad: Ad)
+
+    // Ad Metrics
+    @Insert
+    suspend fun insertAdMetric(metric: AdMetric)
+
+    @Query("SELECT COUNT(*) FROM ad_metrics WHERE adId = :adId AND timestamp >= :startTime")
+    fun getAdImpressions(adId: Int, startTime: Long): Flow<Int>
+
+    @Query("SELECT COUNT(DISTINCT userName) FROM ad_metrics WHERE adId = :adId AND timestamp >= :startTime")
+    fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM ad_metrics WHERE timestamp >= :startTime")
+    fun getTotalImpressions(startTime: Long): Flow<Int>
+
+    @Query("SELECT COUNT(DISTINCT userName) FROM ad_metrics WHERE timestamp >= :startTime")
+    fun getTotalUniqueUsers(startTime: Long): Flow<Int>
 }

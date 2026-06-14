@@ -50,6 +50,14 @@ data class ToDoList(
     val isCompleted: Boolean get() = activities.isNotEmpty() && activities.all { it.isDone }
 }
 
+@Entity(tableName = "ad_metrics")
+data class AdMetric(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val adId: Int,
+    val userName: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 @Entity(tableName = "ads")
 data class Ad(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,

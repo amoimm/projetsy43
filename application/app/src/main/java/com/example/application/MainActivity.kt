@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                 val userProfileData by userProfileFlow.collectAsState(initial = null)
                 var currentScreen by remember { mutableStateOf("loading") }
 
-                // Setting the startup screen with animation logic
+                // Animation logic for startup
                 LaunchedEffect(userProfileData) {
                     if (userProfileData != null && currentScreen == "loading") {
                         if (userProfileData!!.hasCompletedOnboarding) {
@@ -116,13 +116,22 @@ class MainActivity : ComponentActivity() {
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
                 var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
 
-                // LOGIQUE PUBLICITAIRE
+                // Partner Dashboard States
+                var dashboardStartTime by remember { mutableLongStateOf(0L) }
+                var dashboardAdId by remember { mutableIntStateOf(-1) }
+                
+                val totalImpressions by taskViewModel.getTotalImpressions(dashboardStartTime).collectAsState(initial = 0)
+                val totalUniqueUsers by taskViewModel.getTotalUniqueUsers(dashboardStartTime).collectAsState(initial = 0)
+                val adImpressions by taskViewModel.getAdImpressions(dashboardAdId, dashboardStartTime).collectAsState(initial = 0)
+                val adUniqueUsers by taskViewModel.getAdUniqueUsers(dashboardAdId, dashboardStartTime).collectAsState(initial = 0)
+
+                // AD LOGIC
                 var adToShow by remember { mutableStateOf<Ad?>(null) }
                 var nextScreenAfterAd by remember { mutableStateOf("Main") }
-                val appStartTime = remember { System.currentTimeMillis() }
 
                 fun triggerAd(location: String, nextScreen: String) {
-                    val possibleAds = ads.filter { it.triggerLocation == location }
+                    // Check if any ad has the requested location in its trigger string
+                    val possibleAds = ads.filter { it.triggerLocation.split(",").contains(location) }
                     if (possibleAds.isNotEmpty()) {
                         adToShow = possibleAds[Random.nextInt(possibleAds.size)]
                         nextScreenAfterAd = nextScreen
@@ -160,8 +169,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 onUserModeSelected = {
                                     if (userProfileData?.hasCompletedOnboarding == true) {
-                                        val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-                                        currentScreen = if (userProfileData?.lastMotivationDate == today) "Main" else "HowYouFeel"
+                                        currentScreen = "Main"
                                     } else currentScreen = "personal_info"
                                 },
                                 onPartnerModeSelected = {
@@ -174,20 +182,26 @@ class MainActivity : ComponentActivity() {
                                 initialLastName = userProfileData?.partnerLastName ?: "",
                                 initialFirstName = userProfileData?.partnerFirstName ?: "",
                                 initialCompany = userProfileData?.partnerCompany ?: "",
-                                onBackClick = { currentScreen = "mode_selection" },
+                                onBackClick = { 
+                                    if (userProfileData?.partnerLastName?.isNotBlank() == true) currentScreen = "partner_dashboard"
+                                    else currentScreen = "mode_selection"
+                                },
                                 onValidateClick = { ln, fn, co ->
                                     coroutineScope.launch { context.updatePartnerProfile(ln, fn, co) }
                                     currentScreen = "partner_dashboard"
                                 }
                             )
                             "partner_dashboard" -> PartnerDashboardScreen(
+                                ads = ads,
+                                totalImpressions = totalImpressions,
+                                totalUniqueUsers = totalUniqueUsers,
+                                adSpecificImpressions = adImpressions,
+                                adSpecificUniqueUsers = adUniqueUsers,
+                                onPeriodChange = { dashboardStartTime = it },
+                                onAdSelectionChange = { dashboardAdId = it },
                                 modifier = Modifier.padding(innerPadding),
                                 onBackClick = { 
-                                    coroutineScope.launch {
-                                        currentScreen = "welcome_back"
-                                        delay(2500)
-                                        currentScreen = "mode_selection"
-                                    }
+                                    currentScreen = "mode_selection"
                                 },
                                 onSettingsClick = { currentScreen = "partner_info" },
                                 onMyAdsClick = { currentScreen = "my_ads" }
@@ -212,7 +226,20 @@ class MainActivity : ComponentActivity() {
                             )
                             "show_ad" -> VideoAdScreen(
                                 ad = adToShow,
-                                onAdFinished = { currentScreen = nextScreenAfterAd }
+                                onAdFinished = { 
+                                    // Insert metric
+                                    adToShow?.let {
+                                        val metric = AdMetric(adId = it.id, userName = userProfileData?.name ?: "Guest")
+                                        taskViewModel.insertAdMetric(metric)
+                                    }
+                                    currentScreen = nextScreenAfterAd 
+                                }
+                            )
+                            "settings_choice" -> SettingsChoiceScreen(
+                                onBackClick = { currentScreen = "Main" },
+                                onPersonalInfoClick = { currentScreen = "personal_info" },
+                                onCapacityClick = { currentScreen = "capacite_info" },
+                                onMotivationClick = { currentScreen = "HowYouFeel" }
                             )
                             "personal_info" -> PersonalInfoScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -221,23 +248,27 @@ class MainActivity : ComponentActivity() {
                                 initialWeight = userProfileData?.weight ?: "",
                                 initialHeight = userProfileData?.height ?: "",
                                 onBackClick = { 
-                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "Main"
+                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
                                     else currentScreen = "mode_selection"
                                 },
                                 onValidateClick = { n, a, w, h ->
                                     coroutineScope.launch { context.updatePersonalProfile(n, a, w, h) }
-                                    currentScreen = "capacite_info"
+                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
+                                    else currentScreen = "capacite_info"
                                 }
                             )
                             "capacite_info" -> CapaciteScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 initialPushups = userProfileData?.maxPushups ?: "",
                                 initialRunningKm = userProfileData?.maxRunningKm ?: "",
-                                onBackClick = { currentScreen = if (userProfileData?.hasCompletedOnboarding == true) "Main" else "personal_info" },
+                                onBackClick = { 
+                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
+                                    else currentScreen = "personal_info" 
+                                },
                                 onValidateClick = { p, r ->
                                     coroutineScope.launch { context.updateCapacity(p, r) }
-                                    // Toujours aller à Motivation dans les réglages
-                                    currentScreen = "HowYouFeel"
+                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
+                                    else currentScreen = "HowYouFeel"
                                 }
                             )
                             "HowYouFeel" -> HowYouFeelScreen(
@@ -255,7 +286,6 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { currentScreen = "Main" },
                                 onValidateClick = { newList ->
                                     taskViewModel.insertToDoList(newList)
-                                    // Navigate with a flag to trigger the success message
                                     triggerAd("AFTER_LIST", "Main?created=true")
                                 }
                             )
@@ -275,8 +305,11 @@ class MainActivity : ComponentActivity() {
                                             currentScreen = location
                                         }
                                     },
-                                    onDeleteClick = { list -> taskViewModel.deleteToDoList(list) },
-                                    onSettingsClick = { currentScreen = "personal_info" },
+                                    onDeleteClick = { list -> 
+                                        taskViewModel.deleteToDoList(list)
+                                        triggerAd("AFTER_DELETE", "Main")
+                                    },
+                                    onSettingsClick = { currentScreen = "settings_choice" },
                                     onLogoutClick = { currentScreen = "mode_selection" }
                                 )
                             }
@@ -296,20 +329,24 @@ class MainActivity : ComponentActivity() {
                                     onContinueClick = { finalCount ->
                                         if (activeListIndex != null && activeActivityIndex != null) {
                                             try {
-                                                val list = toDoLists[activeListIndex!!]
-                                                val activities = list.activitiesJson.split(";").toMutableList()
-                                                val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                                while (parts.size < 4) parts.add("0")
-                                                parts[3] = finalCount.toString()
-                                                if (finalCount >= target) {
-                                                    parts[2] = "true"
-                                                    coroutineScope.launch { context.markExerciseDone() }
+                                                if (activeListIndex!! < toDoLists.size) {
+                                                    val list = toDoLists[activeListIndex!!]
+                                                    val activities = list.activitiesJson.split(";").toMutableList()
+                                                    if (activeActivityIndex!! < activities.size) {
+                                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                                        while (parts.size < 4) parts.add("0")
+                                                        parts[3] = finalCount.toString()
+                                                        if (finalCount >= target) {
+                                                            parts[2] = "true"
+                                                            coroutineScope.launch { context.markExerciseDone() }
+                                                        }
+                                                        activities[activeActivityIndex!!] = parts.joinToString(",")
+                                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                                        
+                                                        if (finalCount >= target) triggerAd("AFTER_PUSHUP", "Main")
+                                                        else currentScreen = "Main"
+                                                    }
                                                 }
-                                                activities[activeActivityIndex!!] = parts.joinToString(",")
-                                                taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
-                                                
-                                                if (finalCount >= target) triggerAd("AFTER_PUSHUP", "Main")
-                                                else currentScreen = "Main"
                                             } catch (e: Exception) { currentScreen = "Main" }
                                         } else currentScreen = "Main"
                                     }
@@ -331,20 +368,24 @@ class MainActivity : ComponentActivity() {
                                     onContinueClick = { finalDistance ->
                                         if (activeListIndex != null && activeActivityIndex != null) {
                                             try {
-                                                val list = toDoLists[activeListIndex!!]
-                                                val activities = list.activitiesJson.split(";").toMutableList()
-                                                val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                                while (parts.size < 4) parts.add("0")
-                                                parts[3] = finalDistance.toString()
-                                                if (finalDistance >= target) {
-                                                    parts[2] = "true"
-                                                    coroutineScope.launch { context.markExerciseDone() }
+                                                if (activeListIndex!! < toDoLists.size) {
+                                                    val list = toDoLists[activeListIndex!!]
+                                                    val activities = list.activitiesJson.split(";").toMutableList()
+                                                    if (activeActivityIndex!! < activities.size) {
+                                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+                                                        while (parts.size < 4) parts.add("0")
+                                                        parts[3] = finalDistance.toString()
+                                                        if (finalDistance >= target) {
+                                                            parts[2] = "true"
+                                                            coroutineScope.launch { context.markExerciseDone() }
+                                                        }
+                                                        activities[activeActivityIndex!!] = parts.joinToString(",")
+                                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
+                                                        
+                                                        if (finalDistance >= target) triggerAd("AFTER_RUNNING", "Main")
+                                                        else currentScreen = "Main"
+                                                    }
                                                 }
-                                                activities[activeActivityIndex!!] = parts.joinToString(",")
-                                                taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
-                                                
-                                                if (finalDistance >= target) triggerAd("AFTER_RUNNING", "Main")
-                                                else currentScreen = "Main"
                                             } catch (e: Exception) { currentScreen = "Main" }
                                         } else currentScreen = "Main"
                                     }

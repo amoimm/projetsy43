@@ -55,4 +55,14 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
     fun deleteAd(ad: Ad) = viewModelScope.launch {
         taskRepository.deleteAd(ad)
     }
+
+    // Ad Metrics
+    fun insertAdMetric(metric: AdMetric) = viewModelScope.launch {
+        taskRepository.insertAdMetric(metric)
+    }
+
+    fun getAdImpressions(adId: Int, startTime: Long) = taskRepository.getAdImpressions(adId, startTime)
+    fun getAdUniqueUsers(adId: Int, startTime: Long) = taskRepository.getAdUniqueUsers(adId, startTime)
+    fun getTotalImpressions(startTime: Long) = taskRepository.getTotalImpressions(startTime)
+    fun getTotalUniqueUsers(startTime: Long) = taskRepository.getTotalUniqueUsers(startTime)
 }

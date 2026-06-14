@@ -5,9 +5,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
@@ -18,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.ui.bdd.Ad
@@ -34,23 +35,22 @@ fun AddAdScreen(
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var videoUri by remember { mutableStateOf<String?>(null) }
-    var expanded by remember { mutableStateOf(false) }
     
     val locations = listOf(
         "AFTER_LIST" to "After Creating a List",
-        "AFTER_TIME" to "After X time on app",
+        "AFTER_DELETE" to "After Deleting a List",
         "AFTER_PUSHUP" to "After Push-ups",
         "AFTER_RUNNING" to "After Running"
     )
-    var selectedLocation by remember { mutableStateOf(locations[0]) }
-    var triggerValue by remember { mutableStateOf("") }
+    
+    // Multiple selection state
+    val selectedLocations = remember { mutableStateListOf<String>() }
 
     val videoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let {
             try {
-                // Demande de permission persistante pour pouvoir lire la vidéo plus tard
                 context.contentResolver.takePersistableUriPermission(
                     it,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -80,7 +80,8 @@ fun AddAdScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
@@ -109,102 +110,102 @@ fun AddAdScreen(
                 )
             )
 
-            Text("Video Content", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Video Content (Required)", color = Color.White, fontWeight = FontWeight.Bold)
             
             OutlinedButton(
                 onClick = { videoPickerLauncher.launch(arrayOf("video/*")) },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                shape = RoundedCornerShape(8.dp)
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = if (videoUri == null) Color(0xFFEF5350) else Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                border = if (videoUri == null) ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Color.Red)) else ButtonDefaults.outlinedButtonBorder
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(if (videoUri == null) "Import Video" else "Change Video")
+                Text(if (videoUri == null) "IMPORT VIDEO FILE" else "CHANGE VIDEO")
             }
             
             if (videoUri != null) {
                 Text(
-                    text = "Video selected successfully",
-                    color = Color.Green,
-                    fontSize = 12.sp
+                    text = "✓ Video file successfully imported",
+                    color = Color(0xFF4CAF50),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-            Text("Trigger Location", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Select Trigger Events", color = Color.White, fontWeight = FontWeight.Bold)
 
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
+                    .padding(8.dp)
             ) {
-                OutlinedTextField(
-                    value = selectedLocation.second,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color(0xFF1565C0),
-                        unfocusedBorderColor = Color.Gray
-                    )
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(Color(0xFF1E1E1E))
-                ) {
-                    locations.forEach { location ->
-                        DropdownMenuItem(
-                            text = { Text(text = location.second, color = Color.White) },
-                            onClick = {
-                                selectedLocation = location
-                                expanded = false
+                locations.forEach { (key, label) ->
+                    val isSelected = selectedLocations.contains(key)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (isSelected) selectedLocations.remove(key)
+                                else selectedLocations.add(key)
                             }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = null, // Handled by row click
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color(0xFF1565C0),
+                                uncheckedColor = Color.Gray
+                            )
                         )
+                        Spacer(Modifier.width(8.dp))
+                        Text(text = label, color = Color.White)
                     }
                 }
             }
 
-            if (selectedLocation.first == "AFTER_TIME") {
-                OutlinedTextField(
-                    value = triggerValue,
-                    onValueChange = { triggerValue = it },
-                    label = { Text("Time in minutes", color = Color.Gray) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color(0xFF1565C0),
-                        unfocusedBorderColor = Color.Gray
-                    )
-                )
-            }
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.weight(1f))
+            val canSave = title.isNotBlank() && videoUri != null && selectedLocations.isNotEmpty()
 
             Button(
                 onClick = {
-                    if (title.isNotBlank() && content.isNotBlank()) {
+                    if (canSave) {
                         onSaveAdClick(
                             Ad(
                                 title = title,
                                 content = content,
-                                triggerLocation = selectedLocation.first,
-                                triggerValue = triggerValue,
+                                triggerLocation = selectedLocations.joinToString(","),
+                                triggerValue = "",
                                 videoUri = videoUri
                             )
                         )
                     }
                 },
-                enabled = title.isNotBlank() && content.isNotBlank(),
+                enabled = canSave,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1565C0),
+                    disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("SAVE ADVERTISEMENT", fontWeight = FontWeight.Bold)
+            }
+            
+            if (!canSave) {
+                Text(
+                    text = "Please provide a title, a video file, and at least one trigger.",
+                    color = Color.Red.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

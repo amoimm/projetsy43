@@ -29,4 +29,15 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
     override suspend fun insertAd(ad: Ad) = taskDao.insertAd(ad)
     
     override suspend fun deleteAd(ad: Ad) = taskDao.deleteAd(ad)
+
+    // Ad Metrics
+    override suspend fun insertAdMetric(metric: AdMetric) = taskDao.insertAdMetric(metric)
+
+    override fun getAdImpressions(adId: Int, startTime: Long): Flow<Int> = taskDao.getAdImpressions(adId, startTime)
+
+    override fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int> = taskDao.getAdUniqueUsers(adId, startTime)
+
+    override fun getTotalImpressions(startTime: Long): Flow<Int> = taskDao.getTotalImpressions(startTime)
+
+    override fun getTotalUniqueUsers(startTime: Long): Flow<Int> = taskDao.getTotalUniqueUsers(startTime)
 }
