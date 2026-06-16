@@ -367,7 +367,13 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-                                            onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+
+                                            val rawCategory = toDoList.activities[activityIndex].categorie
+                                            val cleanCategory = rawCategory.replace(" ", "").lowercase().replaceFirstChar { it.uppercase() }
+                                            val screenName = cleanCategory + "Screen"
+
+
+                                            onValidateClick("$screenName|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
                                         onShareClick = { onShareClick(toDoList) }
@@ -396,7 +402,8 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-                                            onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                            val screenName = toDoList.activities[activityIndex].categorie.replace(" ", "") + "Screen"
+                                            onValidateClick("$screenName|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
                                         onShareClick = { onShareClick(toDoList) }

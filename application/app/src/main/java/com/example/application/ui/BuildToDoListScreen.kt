@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -195,7 +197,7 @@ fun BuildToDoListScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                listOf("Pushup", "Running").forEach { cat ->
+                                listOf("Pushup", "Pullup", "Squat", "Running").forEach { cat ->
                                     Button(
                                         onClick = {
                                             categorieSelectionnee = cat
@@ -204,8 +206,9 @@ fun BuildToDoListScreen(
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (categorieSelectionnee == cat) Color(0xFF1565C0) else Color.Gray
                                         ),
-                                        modifier = Modifier.weight(1f)
-                                    ) { Text(cat, color = Color.White) }
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(horizontal = 4.dp)
+                                    ) { Text(cat, color = Color.White, fontSize = 11.sp, maxLines = 1) }
                                 }
                             }
 

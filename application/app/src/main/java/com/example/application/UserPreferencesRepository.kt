@@ -17,6 +17,8 @@ data class UserProfile(
     val weight: String = "",
     val height: String = "",
     val maxPushups: String = "0",
+    val maxPullups: String = "0",
+    val maxSquats: String = "0",
     val maxRunningKm: String = "0.0",
     val lastExerciseDate: Long = 0L,
     val lastMotivationDate: String = "",
@@ -34,6 +36,8 @@ private val AGE = stringPreferencesKey("age")
 private val WEIGHT = stringPreferencesKey("weight")
 private val HEIGHT = stringPreferencesKey("height")
 private val MAX_PUSHUPS = stringPreferencesKey("max_pushups")
+private val MAX_PULLUPS = stringPreferencesKey("max_pullups")
+private val MAX_SQUATS = stringPreferencesKey("max_squats")
 private val MAX_RUNNING_KM = stringPreferencesKey("max_running_km")
 private val LAST_EXERCISE_DATE = longPreferencesKey("last_exercise_date")
 private val LAST_MOTIVATION_DATE = stringPreferencesKey("last_motivation_date")
@@ -53,6 +57,8 @@ val Context.userProfileFlow: Flow<UserProfile>
             weight = prefs[WEIGHT] ?: "",
             height = prefs[HEIGHT] ?: "",
             maxPushups = prefs[MAX_PUSHUPS] ?: "0",
+            maxPullups = prefs[MAX_PULLUPS] ?: "0",
+            maxSquats = prefs[MAX_SQUATS] ?: "0",
             maxRunningKm = prefs[MAX_RUNNING_KM] ?: "0.0",
             lastExerciseDate = prefs[LAST_EXERCISE_DATE] ?: 0L,
             lastMotivationDate = prefs[LAST_MOTIVATION_DATE] ?: "",
@@ -74,9 +80,11 @@ suspend fun Context.updatePersonalProfile(name: String, age: String, weight: Str
     }
 }
 
-suspend fun Context.updateCapacity(maxPushups: String, maxRunningKm: String) {
+suspend fun Context.updateCapacity(maxPushups: String, maxPullups: String, maxSquats: String, maxRunningKm: String) {
     dataStore.edit { prefs ->
         prefs[MAX_PUSHUPS] = maxPushups
+        prefs[MAX_PULLUPS] = maxPullups
+        prefs[MAX_SQUATS] = maxSquats
         prefs[MAX_RUNNING_KM] = maxRunningKm
     }
 }
@@ -111,6 +119,8 @@ suspend fun Context.saveUserProfile(profile: UserProfile) {
         prefs[WEIGHT] = profile.weight
         prefs[HEIGHT] = profile.height
         prefs[MAX_PUSHUPS] = profile.maxPushups
+        prefs[MAX_PULLUPS] = profile.maxPullups
+        prefs[MAX_SQUATS] = profile.maxSquats
         prefs[MAX_RUNNING_KM] = profile.maxRunningKm
         prefs[LAST_EXERCISE_DATE] = profile.lastExerciseDate
         prefs[LAST_MOTIVATION_DATE] = profile.lastMotivationDate

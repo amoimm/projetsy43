@@ -259,16 +259,23 @@ class MainActivity : ComponentActivity() {
                             )
                             "capacite_info" -> CapaciteScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                initialPushups = userProfileData?.maxPushups ?: "",
-                                initialRunningKm = userProfileData?.maxRunningKm ?: "",
+                                initialPushups = userProfileData?.maxPushups ?: "0",
+                                initialPullups = userProfileData?.maxPullups ?: "0",
+                                initialSquats = userProfileData?.maxSquats ?: "0",
+                                initialRunningKm = userProfileData?.maxRunningKm ?: "0",
                                 onBackClick = { 
                                     if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
                                     else currentScreen = "personal_info" 
                                 },
-                                onValidateClick = { p, r ->
-                                    coroutineScope.launch { context.updateCapacity(p, r) }
-                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
-                                    else currentScreen = "HowYouFeel"
+                                onValidateClick = { push, pull, squat, run ->
+                                    coroutineScope.launch {
+                                        context.updateCapacity(push, pull, squat, run)
+                                    }
+                                    if (userProfileData?.hasCompletedOnboarding == true) {
+                                        currentScreen = "settings_choice"
+                                    } else {
+                                        currentScreen = "HowYouFeel"
+                                    }
                                 }
                             )
                             "HowYouFeel" -> HowYouFeelScreen(
@@ -313,42 +320,66 @@ class MainActivity : ComponentActivity() {
                                     onLogoutClick = { currentScreen = "mode_selection" }
                                 )
                             }
-                            "PushupScreen" -> {
-                                val (target, initialProgress) = remember(activeListIndex, activeActivityIndex, toDoLists) {
+                            "PushupScreen", "PullupScreen", "SquatScreen" -> {
+                                val exerciseData = remember(activeListIndex, activeActivityIndex, toDoLists) {
                                     try {
-                                        val list = toDoLists[activeListIndex!!]
-                                        val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
-                                        val parts = activity.split(",")
-                                        parts[1].toInt() to (if (parts.size >= 4) parts[3].toInt() else 0)
-                                    } catch (e: Exception) { 10 to 0 }
+                                        val list = toDoLists.getOrNull(activeListIndex ?: -1)
+                                        val activity = list?.activities?.getOrNull(activeActivityIndex ?: -1)
+
+                                        if (activity != null) {
+                                            Triple(
+                                                activity.categorie, // "Pushup", "Pullup" ou "Squat"
+                                                activity.valeur.toInt(),
+                                                activity.progress.toIntOrNull() ?: 0
+                                            )
+                                        } else {
+                                            Triple("Pushup", 10, 0)
+                                        }
+                                    } catch (e: Exception) {
+                                        Triple("Pushup", 10, 0)
+                                    }
                                 }
-                                PushupScreen(
+
+                                val (exerciseId, target, initialProgress) = exerciseData
+
+                                val sensorThreshold = when(exerciseId) {
+                                    "Squat" -> 0.45f   // even more amplitude
+                                    "Pullup" -> 0.50f  // normal amplitude
+                                    else -> 0.25f      // basic
+                                }
+
+                                BodyweightScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     initialCount = initialProgress,
                                     targetObjective = target,
+                                    exerciseType = exerciseId,
+                                    threshold = sensorThreshold,
                                     onContinueClick = { finalCount ->
                                         if (activeListIndex != null && activeActivityIndex != null) {
-                                            try {
-                                                if (activeListIndex!! < toDoLists.size) {
+                                            coroutineScope.launch {
+                                                try {
                                                     val list = toDoLists[activeListIndex!!]
                                                     val activities = list.activitiesJson.split(";").toMutableList()
-                                                    if (activeActivityIndex!! < activities.size) {
-                                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                                        while (parts.size < 4) parts.add("0")
-                                                        parts[3] = finalCount.toString()
-                                                        if (finalCount >= target) {
-                                                            parts[2] = "true"
-                                                            coroutineScope.launch { context.markExerciseDone() }
-                                                        }
-                                                        activities[activeActivityIndex!!] = parts.joinToString(",")
-                                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
-                                                        
-                                                        if (finalCount >= target) triggerAd("AFTER_PUSHUP", "Main")
-                                                        else currentScreen = "Main"
+                                                    val parts = activities[activeActivityIndex!!].split(",").toMutableList()
+
+                                                    while (parts.size < 4) parts.add("0")
+                                                    parts[3] = finalCount.toString()
+
+                                                    if (finalCount >= target) {
+                                                        parts[2] = "true"
+                                                        context.markExerciseDone()
                                                     }
+
+                                                    activities[activeActivityIndex!!] = parts.joinToString(",")
+                                                    val updatedList = list.copy(activitiesJson = activities.joinToString(";"))
+                                                    taskViewModel.insertToDoList(updatedList)
+
+                                                    currentScreen = "Main"
+                                                } catch (e: Exception) {
+                                                    currentScreen = "Main"
                                                 }
-                                            } catch (e: Exception) { currentScreen = "Main" }
-                                        } else currentScreen = "Main"
+                                            }
+                                        }
                                     }
                                 )
                             }

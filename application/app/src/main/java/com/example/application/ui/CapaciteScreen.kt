@@ -23,12 +23,16 @@ import com.example.application.ui.theme.ApplicationTheme
 @Composable
 fun CapaciteScreen(
     modifier: Modifier = Modifier,
-    initialPushups: String = "",
-    initialRunningKm: String = "",
+    initialPushups: String = "0",
+    initialPullups: String = "0",
+    initialSquats: String = "0",
+    initialRunningKm: String = "0",
     onBackClick: () -> Unit = {},
-    onValidateClick: (String, String) -> Unit = { _, _ -> }
+    onValidateClick: (String, String, String, String) -> Unit = { _, _, _, _ -> }
 ) {
-    var pompes by remember(initialPushups) { mutableStateOf(initialPushups) }
+    var pushup by remember(initialPushups) { mutableStateOf(initialPushups) }
+    var pullup by remember(initialPullups) { mutableStateOf(initialPullups) }
+    var squat by remember(initialSquats) { mutableStateOf(initialSquats) }
     var courseKm by remember(initialRunningKm) { mutableStateOf(initialRunningKm) }
 
     Box(
@@ -57,9 +61,27 @@ fun CapaciteScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             InfoInputField(
-                label = stringResource(id = R.string.capacity_info_pompes) + " (Max without a break)",
-                value = pompes,
-                onValueChange = { if (it.all { char -> char.isDigit() }) pompes = it },
+                label = "Pushups (Max)",
+                value = pushup,
+                onValueChange = { if (it.all { char -> char.isDigit() }) pushup = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            InfoInputField(
+                label = "Pullups (Max)",
+                value = pullup,
+                onValueChange = { if (it.all { char -> char.isDigit() }) pullup = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            InfoInputField(
+                label = "Squats (Max)",
+                value = squat,
+                onValueChange = { if (it.all { char -> char.isDigit() }) squat = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -75,12 +97,16 @@ fun CapaciteScreen(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
+            Spacer(modifier = Modifier.height(100.dp))
         }
 
-        val isFormValid = pompes.isNotBlank() && courseKm.isNotBlank()
+        val isFormValid = pushup.isNotBlank()
+                && pullup.isNotBlank()
+                && squat.isNotBlank()
+                && courseKm.isNotBlank()
 
         Button(
-            onClick = { onValidateClick(pompes, courseKm) },
+            onClick = { onValidateClick(pushup, pullup, squat, courseKm) },
             enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
             shape = RoundedCornerShape(12.dp),

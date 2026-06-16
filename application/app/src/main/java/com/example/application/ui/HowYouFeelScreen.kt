@@ -29,9 +29,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-fun generateTodolist(motivation: Float, maxpushups: Int, maxkm: Double): ToDoList {
+fun generateTodolist(motivation: Float, maxpushups: Int, maxpullups: Int, maxsquats: Int, maxkm: Double): ToDoList {
     val ratio = 0.3f + (motivation * 0.7f)
+
     val pushupGoal = (maxpushups * ratio).toInt().coerceAtLeast(5)
+    val pullupGoal = (maxpullups * ratio).toInt().coerceAtLeast(2)
+    val squatGoal = (maxsquats * ratio).toInt().coerceAtLeast(10)
     val runningGoal = String.format(Locale.US, "%.1f", (maxkm * ratio).coerceAtLeast(1.0))
 
     val title = when {
@@ -40,7 +43,7 @@ fun generateTodolist(motivation: Float, maxpushups: Int, maxkm: Double): ToDoLis
         else -> "Stay in movement !"
     }
 
-    val activities = "Pushup,$pushupGoal,false;Running,$runningGoal,false"
+    val activities = "Pushup,$pushupGoal,false;Pullup,$pullupGoal,false;Squat,$squatGoal,false;Running,$runningGoal,false"
 
     return ToDoList(
         title = title,
@@ -160,9 +163,13 @@ fun HowYouFeelScreen(
 
         Button(
             onClick = {
-                val maxP = userProfile?.maxPushups?.toIntOrNull() ?: 20
-                val maxK = userProfile?.maxRunningKm?.toDoubleOrNull() ?: 5.0
-                val autoList = generateTodolist(fillPercentage, maxP, maxK)
+                val maxPush = userProfile?.maxPushups?.toIntOrNull() ?: 15
+                val maxPull = userProfile?.maxPullups?.toIntOrNull() ?: 5
+                val maxS = userProfile?.maxSquats?.toIntOrNull() ?: 20
+                val maxK = userProfile?.maxRunningKm?.toDoubleOrNull() ?: 3.0
+
+                val autoList = generateTodolist(fillPercentage, maxPush, maxPull, maxS, maxK)
+
                 onValidateClick(autoList, fillPercentage)
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),

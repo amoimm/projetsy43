@@ -65,7 +65,7 @@ fun SettingsChoiceScreen(
 
             SettingsOptionItem(
                 title = "Physical Capacity",
-                subtitle = "Pushups and running limits",
+                subtitle = "Pushups, pullups, squats and running limits",
                 icon = Icons.Default.Edit,
                 onClick = onCapacityClick
             )

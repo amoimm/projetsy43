@@ -36,10 +36,12 @@ enum class WorkoutState {
 }
 
 @Composable
-fun PushupScreen(
+fun BodyweightScreen(
     modifier: Modifier = Modifier,
     initialCount: Int = 0,
     targetObjective: Int,
+    exerciseType: String,
+    threshold: Float = 0.25f,
     onContinueClick: (Int) -> Unit = {}
 ) {
     var count by remember { mutableIntStateOf(initialCount) }
@@ -102,6 +104,15 @@ fun PushupScreen(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event == null) return
 
+                val downThreshold = when (exerciseType) {
+                    "Squat", "Pullup" -> 6f
+                    else -> 4f
+                }
+                val upThreshold = when (exerciseType) {
+                    "Squat", "Pullup" -> 14f
+                    else -> 9f
+                }
+
                 if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
                     gravityValues[0] = alpha * gravityValues[0] + (1 - alpha) * event.values[0]
                     gravityValues[1] = alpha * gravityValues[1] + (1 - alpha) * event.values[1]
@@ -112,8 +123,9 @@ fun PushupScreen(
                     val linZ = event.values[2] - gravityValues[2]
                     val magnitude = sqrt(linX * linX + linY * linY + linZ * linZ)
 
-                    if (!wentDown && magnitude > 4f) { wentDown = true }
-                    if (wentDown && magnitude > 9f) {
+                    // Utilisation des seuils dynamiques
+                    if (!wentDown && magnitude > downThreshold) { wentDown = true }
+                    if (wentDown && magnitude > upThreshold) {
                         val now = System.currentTimeMillis()
                         if (now - lastPushupTime >= COOLDOWN_MS) {
                             count++
@@ -123,6 +135,7 @@ fun PushupScreen(
                         wentDown = false
                     }
                 } else if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
+                    // La proximité reste identique (détection du visage/sol)
                     val distance = event.values[0]
                     val near = distance < event.sensor.maximumRange
                     if (near && !isNearGround) {
@@ -170,7 +183,11 @@ fun PushupScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Text(
-                    text = if (count >= targetObjective) stringResource(id = R.string.goal_achieved) else stringResource(id = R.string.pushup_done),
+                    text = if (count >= targetObjective) {
+                        stringResource(id = R.string.goal_achieved)
+                    } else {
+                        "$exerciseType done"
+                    },
                     color = if (count >= targetObjective) Color.Yellow else Color.Gray,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold
@@ -216,7 +233,7 @@ fun PushupScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
-                        Text(text = stringResource(id = R.string.add_pushup).uppercase(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Add manually ${exerciseType.uppercase()}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     TextButton(onClick = { onContinueClick(count) }) {
