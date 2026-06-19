@@ -293,7 +293,7 @@ fun MainScreen(
 
     val dailyLists = toDoLists.filter { it.frequency == "DAILY" }.sortedByDescending { it.id }
     val weeklyLists = toDoLists.filter { it.frequency == "WEEKLY" }.sortedByDescending { it.id }
-    val onceLists = toDoLists.filter { it.frequency == "ONCE" }.sortedByDescending { it.id }
+    val onceLists = toDoLists.filter { it.frequency == "ONCE" }.sortedBy { it.date }
 
     Surface(
         modifier = modifier.fillMaxSize(),
