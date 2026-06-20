@@ -129,9 +129,8 @@ class MainActivity : ComponentActivity() {
                 var adToShow by remember { mutableStateOf<Ad?>(null) }
                 var nextScreenAfterAd by remember { mutableStateOf("Main") }
 
-                fun triggerAd(location: String, nextScreen: String) {
-                    // Check if any ad has the requested location in its trigger string
-                    val possibleAds = ads.filter { it.triggerLocation.split(",").contains(location) }
+                fun triggerAd(location: AdTriggerLocation, nextScreen: String) {
+                    val possibleAds = ads.filter { it.triggerLocation.split(",").contains(location.name) }
                     if (possibleAds.isNotEmpty()) {
                         adToShow = possibleAds[Random.nextInt(possibleAds.size)]
                         nextScreenAfterAd = nextScreen
@@ -293,7 +292,7 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { currentScreen = "Main" },
                                 onValidateClick = { newList ->
                                     taskViewModel.insertToDoList(newList)
-                                    triggerAd("AFTER_LIST", "Main?created=true")
+                                    triggerAd(AdTriggerLocation.AFTER_LIST, "Main?created=true")
                                 }
                             )
                             "Main", "Main?created=true" -> {
@@ -314,7 +313,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onDeleteClick = { list -> 
                                         taskViewModel.deleteToDoList(list)
-                                        triggerAd("AFTER_DELETE", "Main")
+                                        triggerAd(AdTriggerLocation.AFTER_DELETE, "Main")
                                     },
                                     onSettingsClick = { currentScreen = "settings_choice" },
                                     onLogoutClick = { currentScreen = "mode_selection" }
@@ -328,31 +327,31 @@ class MainActivity : ComponentActivity() {
 
                                         if (activity != null) {
                                             Triple(
-                                                activity.categorie, // "Pushup", "Pullup" ou "Squat"
+                                                activity.categorie, // ActivityCategory enum
                                                 activity.valeur.toInt(),
                                                 activity.progress.toIntOrNull() ?: 0
                                             )
                                         } else {
-                                            Triple("Pushup", 10, 0)
+                                            Triple(ActivityCategory.PUSHUP, 10, 0)
                                         }
                                     } catch (e: Exception) {
-                                        Triple("Pushup", 10, 0)
+                                        Triple(ActivityCategory.PUSHUP, 10, 0)
                                     }
                                 }
 
                                 val (exerciseId, target, initialProgress) = exerciseData
 
                                 val sensorThreshold = when(exerciseId) {
-                                    "Squat" -> 0.45f   // even more amplitude
-                                    "Pullup" -> 0.50f  // normal amplitude
-                                    else -> 0.25f      // basic
+                                    ActivityCategory.SQUAT -> 0.45f
+                                    ActivityCategory.PULLUP -> 0.50f
+                                    else -> 0.25f
                                 }
 
                                 BodyweightScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     initialCount = initialProgress,
                                     targetObjective = target,
-                                    exerciseType = exerciseId,
+                                    exerciseType = exerciseId.name, // Pass name as String if BodyweightScreen expects it
                                     threshold = sensorThreshold,
                                     onContinueClick = { finalCount ->
                                         if (activeListIndex != null && activeActivityIndex != null) {
@@ -374,7 +373,11 @@ class MainActivity : ComponentActivity() {
                                                     val updatedList = list.copy(activitiesJson = activities.joinToString(";"))
                                                     taskViewModel.insertToDoList(updatedList)
 
-                                                    currentScreen = "Main"
+                                                    if (finalCount >= target) {
+                                                        triggerAd(AdTriggerLocation.AFTER_PUSHUP, "Main")
+                                                    } else {
+                                                        currentScreen = "Main"
+                                                    }
                                                 } catch (e: Exception) {
                                                     currentScreen = "Main"
                                                 }
@@ -413,8 +416,11 @@ class MainActivity : ComponentActivity() {
                                                         activities[activeActivityIndex!!] = parts.joinToString(",")
                                                         taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
                                                         
-                                                        if (finalDistance >= target) triggerAd("AFTER_RUNNING", "Main")
-                                                        else currentScreen = "Main"
+                                                        if (finalDistance >= target) {
+                                                            triggerAd(AdTriggerLocation.AFTER_RUNNING, "Main")
+                                                        } else {
+                                                            currentScreen = "Main"
+                                                        }
                                                     }
                                                 }
                                             } catch (e: Exception) { currentScreen = "Main" }

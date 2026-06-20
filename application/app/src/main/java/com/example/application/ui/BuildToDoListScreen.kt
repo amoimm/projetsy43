@@ -26,6 +26,8 @@ import java.util.Date
 import java.util.Locale
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.bdd.ActiviteSportive
+import com.example.application.ui.bdd.ActivityCategory
+import com.example.application.ui.bdd.Frequency
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,11 +38,11 @@ fun BuildToDoListScreen(
 ) {
     var titleSaisie by remember { mutableStateOf("") }
     var listeActivites by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-    var categorieSelectionnee by remember { mutableStateOf("Pushup") }
+    var categorieSelectionnee by remember { mutableStateOf(ActivityCategory.PUSHUP) }
     var valeurSaisie by remember { mutableStateOf("") }
     var compteurId by remember { mutableIntStateOf(0) }
 
-    var frequency by remember { mutableStateOf("ONCE") }
+    var frequency by remember { mutableStateOf(Frequency.ONCE) }
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "All week")
     var selectedDay by remember { mutableStateOf("Monday") }
 
@@ -126,7 +128,7 @@ fun BuildToDoListScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                val frequencies = listOf("ONCE" to "Once", "DAILY" to "Daily", "WEEKLY" to "Weekly")
+                                val frequencies = listOf(Frequency.ONCE to "Once", Frequency.DAILY to "Daily", Frequency.WEEKLY to "Weekly")
                                 frequencies.forEach { (key, label) ->
                                     Button(
                                         onClick = { frequency = key },
@@ -141,7 +143,7 @@ fun BuildToDoListScreen(
                                 }
                             }
 
-                            if (frequency == "ONCE") {
+                            if (frequency == Frequency.ONCE) {
                                 Text("Select Date :", fontWeight = FontWeight.SemiBold, color = Color.White)
                                 OutlinedButton(
                                     onClick = { showDatePicker = true },
@@ -150,7 +152,7 @@ fun BuildToDoListScreen(
                                 ) {
                                     Text(text = dateSelectionnee)
                                 }
-                            } else if (frequency == "WEEKLY") {
+                            } else if (frequency == Frequency.WEEKLY) {
                                 Text("Select Day :", fontWeight = FontWeight.SemiBold, color = Color.White)
                                 var expandedDays by remember { mutableStateOf(false) }
                                 ExposedDropdownMenuBox(
@@ -197,7 +199,13 @@ fun BuildToDoListScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                listOf("Pushup", "Pullup", "Squat", "Running").forEach { cat ->
+                                val cats = listOf(
+                                    ActivityCategory.PUSHUP to "Pushup",
+                                    ActivityCategory.PULLUP to "Pullup",
+                                    ActivityCategory.SQUAT to "Squat",
+                                    ActivityCategory.RUNNING to "Running"
+                                )
+                                cats.forEach { (cat, label) ->
                                     Button(
                                         onClick = {
                                             categorieSelectionnee = cat
@@ -208,14 +216,14 @@ fun BuildToDoListScreen(
                                         ),
                                         modifier = Modifier.weight(1f),
                                         contentPadding = PaddingValues(horizontal = 4.dp)
-                                    ) { Text(cat, color = Color.White, fontSize = 11.sp, maxLines = 1) }
+                                    ) { Text(label, color = Color.White, fontSize = 11.sp, maxLines = 1) }
                                 }
                             }
 
                             OutlinedTextField(
                                 value = valeurSaisie,
                                 onValueChange = { input ->
-                                    if (categorieSelectionnee == "Running") {
+                                    if (categorieSelectionnee == ActivityCategory.RUNNING) {
                                         if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
                                             valeurSaisie = input.replace(',', '.')
                                         }
@@ -284,15 +292,15 @@ fun BuildToDoListScreen(
             onClick = { 
                 if (titleSaisie.isNotBlank() && listeActivites.isNotEmpty()) {
                     val activitiesString = listeActivites.joinToString(";") {
-                        "${it.categorie},${it.valeur},${it.isDone},${it.progress}"
+                        "${it.categorie.name},${it.valeur},${it.isDone},${it.progress}"
                     }
                     onValidateClick(
                         ToDoList(
                             title = titleSaisie,
-                            date = if (frequency == "ONCE") dateSelectionnee else "",
+                            date = if (frequency == Frequency.ONCE) dateSelectionnee else "",
                             activitiesJson = activitiesString,
                             frequency = frequency,
-                            targetDays = if (frequency == "WEEKLY") selectedDay else ""
+                            targetDays = if (frequency == Frequency.WEEKLY) selectedDay else ""
                         )
                     )
                 }
@@ -328,13 +336,13 @@ fun ActiviteItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = activite.categorie,
+                text = activite.categorie.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = Color.White,
                 modifier = Modifier.weight(1f)
             )
-            val suffixe = if (activite.categorie == "Running") "km" else "reps"
+            val suffixe = if (activite.categorie == ActivityCategory.RUNNING) "km" else "reps"
             Text(
                 text = "${activite.valeur} $suffixe",
                 fontSize = 18.sp,
