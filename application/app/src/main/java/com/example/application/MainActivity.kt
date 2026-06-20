@@ -97,14 +97,39 @@ class MainActivity : ComponentActivity() {
             ApplicationTheme {
                 val currentUser by taskViewModel.currentUser.collectAsState()
                 val currentPartner by taskViewModel.currentPartner.collectAsState()
+                val isSessionRestored by taskViewModel.isSessionRestored.collectAsState()
                 var currentScreen by remember { mutableStateOf("loading") }
                 var authError by remember { mutableStateOf<String?>(null) }
 
-                // Animation logic for startup
+                // Session restoration logic
                 LaunchedEffect(Unit) {
-                    delay(500)
-                    if (currentScreen == "loading") {
-                        currentScreen = "welcome"
+                    val userProfileFlow = context.userProfileFlow
+                    userProfileFlow.collect { profile ->
+                        if (profile.loggedInUserId != -1 || profile.loggedInPartnerId != -1) {
+                            taskViewModel.restoreSession(profile.loggedInUserId, profile.loggedInPartnerId)
+                        } else {
+                            delay(500)
+                            if (currentScreen == "loading") {
+                                currentScreen = "welcome"
+                            }
+                        }
+                    }
+                }
+
+                LaunchedEffect(isSessionRestored) {
+                    if (isSessionRestored) {
+                        currentScreen = "welcome_back"
+                        delay(2000)
+                        if (currentUser != null) {
+                            val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                            if (currentUser?.lastMotivationDate != today) {
+                                currentScreen = "HowYouFeel"
+                            } else {
+                                currentScreen = "Main"
+                            }
+                        } else if (currentPartner != null) {
+                            currentScreen = "partner_dashboard"
+                        }
                     }
                 }
 
@@ -186,7 +211,7 @@ class MainActivity : ComponentActivity() {
                             "login_user" -> LoginScreen(
                                 isPartner = false,
                                 onLoginClick = { u, p ->
-                                    taskViewModel.loginUser(u, p) { success ->
+                                    taskViewModel.loginUser(u, p, context) { success ->
                                         if (success != null) {
                                             authError = null
                                             currentScreen = "welcome_back"
@@ -211,7 +236,7 @@ class MainActivity : ComponentActivity() {
                             "login_partner" -> LoginScreen(
                                 isPartner = true,
                                 onLoginClick = { u, p ->
-                                    taskViewModel.loginPartner(u, p) { success ->
+                                    taskViewModel.loginPartner(u, p, context) { success ->
                                         if (success != null) {
                                             authError = null
                                             currentScreen = "partner_dashboard"
@@ -253,7 +278,7 @@ class MainActivity : ComponentActivity() {
                                         lastMotivationLevel = currentUser?.lastMotivationLevel ?: 0.5f
                                     )
                                     if (currentUser == null) {
-                                        taskViewModel.registerUser(newUser) {
+                                        taskViewModel.registerUser(newUser, context) {
                                             currentScreen = "capacite"
                                         }
                                     } else {
@@ -283,7 +308,7 @@ class MainActivity : ComponentActivity() {
                                         company = co
                                     )
                                     if (currentPartner == null) {
-                                        taskViewModel.registerPartner(newPartner) {
+                                        taskViewModel.registerPartner(newPartner, context) {
                                             currentScreen = "partner_dashboard"
                                         }
                                     } else {
@@ -352,7 +377,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onSettingsClick = { currentScreen = "settings_choice" },
                                     onLogoutClick = {
-                                        taskViewModel.logout()
+                                        taskViewModel.logout(context)
                                         currentScreen = "mode_selection"
                                     },
                                     onCommunityClick = { currentScreen = "community_lists" }
@@ -361,6 +386,7 @@ class MainActivity : ComponentActivity() {
                             "community_lists" -> {
                                 CommunityToDoListsScreen(
                                     communityLists = communityToDoLists,
+                                    getUsernameById = { id -> taskViewModel.getUsernameById(id) },
                                     onBackClick = { currentScreen = "Main" },
                                     onCopyClick = { original ->
                                         currentUser?.let { user ->
@@ -477,7 +503,7 @@ class MainActivity : ComponentActivity() {
                                 onPeriodChange = { dashboardStartTime = it },
                                 onAdSelectionChange = { dashboardAdId = it },
                                 onBackClick = { 
-                                    taskViewModel.logout()
+                                    taskViewModel.logout(context)
                                     currentScreen = "mode_selection" 
                                 },
                                 onSettingsClick = { currentScreen = "partner_info" },

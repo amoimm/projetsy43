@@ -26,6 +26,7 @@ import java.util.Locale
 @Composable
 fun CommunityToDoListsScreen(
     communityLists: List<ToDoList>,
+    getUsernameById: suspend (Int) -> String?,
     onBackClick: () -> Unit,
     onCopyClick: (ToDoList) -> Unit,
     modifier: Modifier = Modifier
@@ -68,8 +69,15 @@ fun CommunityToDoListsScreen(
             ) {
                 items(communityLists) { list ->
                     val isExpanded = expandedCardIds.contains(list.id)
+                    var creatorName by remember { mutableStateOf<String?>(null) }
+                    
+                    LaunchedEffect(list.userId) {
+                        creatorName = getUsernameById(list.userId)
+                    }
+
                     CommunityListCard(
                         toDoList = list,
+                        creatorName = creatorName,
                         isExpanded = isExpanded,
                         onExpandClick = {
                             if (isExpanded) expandedCardIds.remove(list.id)
@@ -86,6 +94,7 @@ fun CommunityToDoListsScreen(
 @Composable
 fun CommunityListCard(
     toDoList: ToDoList,
+    creatorName: String?,
     isExpanded: Boolean,
     onExpandClick: () -> Unit,
     onCopyClick: () -> Unit,
@@ -113,6 +122,16 @@ fun CommunityListCard(
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
+                        
+                        creatorName?.let { name ->
+                            Text(
+                                text = "Created by: $name",
+                                color = Color(0xFF90CAF9),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
                         when (toDoList.frequency) {
                             Frequency.DAILY -> {
                                 Badge(containerColor = Color(0xFF1565C0)) {

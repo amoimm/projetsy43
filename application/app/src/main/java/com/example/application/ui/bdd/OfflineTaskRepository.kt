@@ -21,6 +21,8 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
 
     override fun getAllListsExceptUser(userId: Int): Flow<List<ToDoList>> = taskDao.getAllListsExceptUser(userId)
 
+    override suspend fun getUsernameById(userId: Int): String? = taskDao.getUsernameById(userId)
+
     override suspend fun insertToDoList(list: ToDoList) = taskDao.insertToDoList(list)
 
     override suspend fun deleteToDoList(list: ToDoList) = taskDao.deleteToDoList(list)
