@@ -33,7 +33,7 @@ import kotlin.random.Random
 private const val COOLDOWN_MS = 500L
 
 enum class WorkoutState {
-    COUNTDOWN, TRAINING, FINISHED
+    COUNTDOWN, TRAINING
 }
 
 @Composable
@@ -94,71 +94,102 @@ fun BodyweightScreen(
 
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        val proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
 
-        var lastPushupTime = 0L
-        var wentDown = false
-        var isNearGround = false
-        val gravityValues = FloatArray(3) { 0f }
-        var gravityInitialized = false
+        var lastRepTime = 0L
+
+        // Gravity
+        val gravity = FloatArray(3)
         val alpha = 0.8f
+        var gravityReady = false
+
+        // Vertical position
+        var velocity = 0f
+        var vertPos = 0f
+        var lastTimeNs = 0L
+        val driftAlpha = 0.998f
+
+        //reps is between top and down
+        var peakMin = 0f
+        var peakMax = 0f
+
+        val ampThresh = 0.06f * threshold
+
+        // for pullups
+        val invertedMode = exerciseType.contains("Pull", ignoreCase = true)
 
         val sensorListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
-                if (event == null) return
+                if (event == null || event.sensor.type != Sensor.TYPE_ACCELEROMETER) return
 
-                val downThreshold = 12f * threshold
-                val upThreshold = 28f * threshold
+                if (!gravityReady) {
+                    gravity[0] = event.values[0]
+                    gravity[1] = event.values[1]
+                    gravity[2] = event.values[2]
+                    gravityReady = true
+                    lastTimeNs = event.timestamp
+                    return
+                }
+                gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0]
+                gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1]
+                gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2]
 
-                if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) { // take care of gravity
-                    if (!gravityInitialized) {
-                        gravityValues[0] = event.values[0]
-                        gravityValues[1] = event.values[1]
-                        gravityValues[2] = event.values[2]
-                        gravityInitialized = true
-                        return
+                val gMag = sqrt(
+                    gravity[0] * gravity[0] +
+                            gravity[1] * gravity[1] +
+                            gravity[2] * gravity[2]
+                )
+                if (gMag < 0.5f) return
+
+                // Vertical Acceleration
+                val linX = event.values[0] - gravity[0]
+                val linY = event.values[1] - gravity[1]
+                val linZ = event.values[2] - gravity[2]
+
+                val vertAccel = -(linX * gravity[0] + linY * gravity[1] + linZ * gravity[2]) / gMag
+
+                // position
+                val dt = (event.timestamp - lastTimeNs) * 1e-9f
+                lastTimeNs = event.timestamp
+                if (dt <= 0f || dt > 0.1f) return
+
+                velocity = (velocity + vertAccel * dt) * driftAlpha
+                vertPos  = (vertPos  + velocity   * dt) * driftAlpha
+
+                // update top and bottom
+                if (vertPos < peakMin) peakMin = vertPos
+                if (vertPos > peakMax) peakMax = vertPos
+
+                val amplitude = peakMax - peakMin
+
+                if (amplitude >= ampThresh) {
+                    val isReturning = if (!invertedMode) {
+                        vertPos > peakMin + ampThresh * 0.5f
+                    } else {
+                        vertPos < peakMax - ampThresh * 0.5f
                     }
-                    gravityValues[0] = alpha * gravityValues[0] + (1 - alpha) * event.values[0]
-                    gravityValues[1] = alpha * gravityValues[1] + (1 - alpha) * event.values[1]
-                    gravityValues[2] = alpha * gravityValues[2] + (1 - alpha) * event.values[2]
 
-                    val linX = event.values[0] - gravityValues[0] // minus to keep only our mouvements
-                    val linY = event.values[1] - gravityValues[1]
-                    val linZ = event.values[2] - gravityValues[2]
-                    val magnitude = sqrt(linX * linX + linY * linY + linZ * linZ)
-
-                    if (!wentDown && magnitude > downThreshold) { wentDown = true }
-                    if (wentDown && magnitude > upThreshold) {
+                    if (isReturning) {
                         val now = System.currentTimeMillis()
-                        if (now - lastPushupTime >= COOLDOWN_MS) {
+                        if (now - lastRepTime >= COOLDOWN_MS) {
                             count++
                             playPushupSound()
-                            lastPushupTime = now
+                            lastRepTime = now
                         }
-                        wentDown = false
-                    }
-                } else if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
-                    // La proximité reste identique (détection du visage/sol)
-                    val distance = event.values[0]
-                    val near = distance < event.sensor.maximumRange
-                    if (near && !isNearGround) {
-                        isNearGround = true
-                    } else if (!near && isNearGround) {
-                        val now = System.currentTimeMillis()
-                        if (now - lastPushupTime >= COOLDOWN_MS) {
-                            count++
-                            playPushupSound()
-                            lastPushupTime = now
-                        }
-                        isNearGround = false
+                        // Reset complet pour la prochaine rep
+                        velocity = 0f
+                        vertPos  = 0f
+                        peakMin  = 0f
+                        peakMax  = 0f
                     }
                 }
             }
+
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
 
-        accelSensor?.let { sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_GAME) }
-        proximitySensor?.let { sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI) }
+        accelSensor?.let {
+            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_GAME)
+        }
 
         onDispose { sensorManager.unregisterListener(sensorListener) }
     }
@@ -284,7 +315,11 @@ fun FireworkEffect() {
                 val distance = speed * progress
                 val x = center.x + (cos(angle) * distance).toFloat()
                 val y = center.y + (sin(angle) * distance).toFloat() + (progress * progress * 100f)
-                drawCircle(color = color.copy(alpha = 1f - progress), radius = 6.dp.toPx() * (1f - progress), center = Offset(x, y))
+                drawCircle(
+                    color = color.copy(alpha = 1f - progress),
+                    radius = 6.dp.toPx() * (1f - progress),
+                    center = Offset(x, y)
+                )
             }
         }
     }
