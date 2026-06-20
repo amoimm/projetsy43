@@ -132,13 +132,16 @@ class MainActivity : ComponentActivity() {
                 fun triggerAd(location: String, nextScreen: String) {
                     // Check if any ad has the requested location in its trigger string
                     val possibleAds = ads.filter { it.triggerLocation.split(",").contains(location) }
-                    if (possibleAds.isNotEmpty()) {
-                        adToShow = possibleAds[Random.nextInt(possibleAds.size)]
-                        nextScreenAfterAd = nextScreen
-                        currentScreen = "show_ad"
+                    
+                    // Even if no ads match, we go to show_ad. VideoAdScreen will handle the fallback.
+                    adToShow = if (possibleAds.isNotEmpty()) {
+                        possibleAds[Random.nextInt(possibleAds.size)]
                     } else {
-                        currentScreen = nextScreen
+                        null
                     }
+                    
+                    nextScreenAfterAd = nextScreen
+                    currentScreen = "show_ad"
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

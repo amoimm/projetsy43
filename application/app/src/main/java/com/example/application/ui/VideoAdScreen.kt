@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.application.R
 import com.example.application.ui.bdd.Ad
 
 @Composable
@@ -35,21 +36,19 @@ fun VideoAdScreen(
                     val uri = if (ad?.videoUri != null) {
                         Uri.parse(ad.videoUri)
                     } else {
-                        // Fallback to default raw resource if needed or just handle empty
-                        null
+                        // Fallback to default raw resource if no partner ad is provided
+                        Uri.parse("android.resource://${ctx.packageName}/${R.raw.publicite}")
                     }
                     
-                    if (uri != null) {
-                        setVideoURI(uri)
-                        setOnPreparedListener { it.start() }
-                        setOnCompletionListener { onAdFinished() }
-                        setOnErrorListener { _, _, _ -> 
-                            onAdFinished()
-                            true 
-                        }
-                    } else {
-                        // If no video, just finish immediately
-                        post { onAdFinished() }
+                    setVideoURI(uri)
+                    setOnPreparedListener { 
+                        it.isLooping = true
+                        it.start() 
+                    }
+                    setOnCompletionListener { onAdFinished() }
+                    setOnErrorListener { _, _, _ -> 
+                        onAdFinished()
+                        true 
                     }
                 }
             },
@@ -57,28 +56,24 @@ fun VideoAdScreen(
         )
 
         // Overlay for Title and Message
-        ad?.let {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(24.dp)
-                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = it.title,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-                if (it.content.isNotBlank()) {
-                    Text(
-                        text = it.content,
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 14.sp
-                    )
-                }
-            }
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(24.dp)
+                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                .padding(12.dp)
+        ) {
+            Text(
+                text = ad?.title ?: "Special Offer",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+            Text(
+                text = ad?.content ?: "Check out this content while we save your progress!",
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 14.sp
+            )
         }
 
         TextButton(
