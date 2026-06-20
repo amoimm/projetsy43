@@ -350,6 +350,27 @@ class MainActivity : ComponentActivity() {
                                         taskViewModel.deleteToDoList(list)
                                         triggerAd(AdTriggerLocation.AFTER_DELETE, "Main")
                                     },
+                                    onShareClick = { list ->
+                                        val activitiesText = list.activities.joinToString("\n") {
+                                            val unit = if (it.categorie == ActivityCategory.RUNNING) "km" else "reps"
+                                            "- ${it.categorie.name}: ${it.valeur} $unit (Done! ✅)"
+                                        }
+                                        val shareMessage = """
+                                            |🏋️ Workout Finished: ${list.title} !
+                                            |📅 Date: ${list.date}
+                                            |
+                                            |My activities:
+                                            |$activitiesText
+                                            |
+                                            |Done with my favorite fitness app 🚀
+                                        """.trimMargin()
+
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(android.content.Intent.EXTRA_TEXT, shareMessage)
+                                        }
+                                        context.startActivity(android.content.Intent.createChooser(intent, "Share your progress"))
+                                    },
                                     onSettingsClick = { currentScreen = "settings_choice" },
                                     onLogoutClick = {
                                         taskViewModel.logout()
