@@ -163,9 +163,17 @@ class MainActivity : ComponentActivity() {
                             "welcome" -> WelcomeScreen(modifier = Modifier.padding(innerPadding), onContinueClick = { currentScreen = "mode_selection" })
                             "mode_selection" -> ModeSelectionScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onUserModeSelected = { 
-                                    if (currentUser != null) currentScreen = "Main"
-                                    else currentScreen = "login_user"
+                                onUserModeSelected = {
+                                    if (currentUser != null) {
+                                        val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                                        if (currentUser?.lastMotivationDate != today) {
+                                            currentScreen = "HowYouFeel"
+                                        } else {
+                                            currentScreen = "Main"
+                                        }
+                                    } else {
+                                        currentScreen = "login_user"
+                                    }
                                 },
                                 onPartnerModeSelected = { 
                                     if (currentPartner != null) currentScreen = "partner_dashboard"
