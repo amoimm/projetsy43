@@ -40,7 +40,7 @@ fun AddAdScreen(
     val locations = listOf(
         "AFTER_LIST" to "After Creating a List",
         "AFTER_DELETE" to "After Deleting a List",
-        "AFTER_PUSHUP" to "After Push-ups",
+        "AFTER_PUSHUP" to "After BodyWeight",
         "AFTER_RUNNING" to "After Running"
     )
     
