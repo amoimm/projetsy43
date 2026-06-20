@@ -88,9 +88,15 @@ data class ToDoList(
             parentColumns = ["id"],
             childColumns = ["userId"],
             onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Ad::class,
+            parentColumns = ["id"],
+            childColumns = ["adId"],
+            onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("userId")]
+    indices = [Index("userId"), Index("adId")]
 )
 data class AdMetric(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
