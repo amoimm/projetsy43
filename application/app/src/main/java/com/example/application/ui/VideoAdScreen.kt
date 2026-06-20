@@ -63,13 +63,13 @@ fun VideoAdScreen(
                 .padding(12.dp)
         ) {
             Text(
-                text = ad?.title ?: "Sponsorisé",
+                text = ad?.title ?: "Sponsored",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
             )
             Text(
-                text = ad?.content ?: "Merci de votre patience pendant que nous préparons votre séance !",
+                text = ad?.content ?: "Please wait while we prepare your session!",
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 14.sp
             )

@@ -36,6 +36,9 @@ interface TaskDao {
     @Query("SELECT * FROM todo_lists WHERE userId != :userId")
     fun getAllListsExceptUser(userId: Int): Flow<List<ToDoList>>
 
+    @Query("SELECT username FROM users WHERE id = :userId")
+    suspend fun getUsernameById(userId: Int): String?
+
     @Delete
     suspend fun deleteToDoList(toDoList: ToDoList)
 

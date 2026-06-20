@@ -13,6 +13,7 @@ interface TaskRepository {
 
     fun getAllListsForUser(userId: Int): Flow<List<ToDoList>>
     fun getAllListsExceptUser(userId: Int): Flow<List<ToDoList>>
+    suspend fun getUsernameById(userId: Int): String?
     suspend fun insertToDoList(list: ToDoList)
     suspend fun deleteToDoList(list: ToDoList)
 
