@@ -59,6 +59,20 @@ interface TaskDao {
     @Query("SELECT COUNT(DISTINCT userId) FROM ad_metrics WHERE adId = :adId AND timestamp >= :startTime")
     fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int>
 
+    @Query("""
+        SELECT COUNT(*) FROM ad_metrics 
+        INNER JOIN ads ON ad_metrics.adId = ads.id 
+        WHERE ads.partnerId = :partnerId AND ad_metrics.timestamp >= :startTime
+    """)
+    fun getPartnerTotalImpressions(partnerId: Int, startTime: Long): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(DISTINCT userId) FROM ad_metrics 
+        INNER JOIN ads ON ad_metrics.adId = ads.id 
+        WHERE ads.partnerId = :partnerId AND ad_metrics.timestamp >= :startTime
+    """)
+    fun getPartnerTotalUniqueUsers(partnerId: Int, startTime: Long): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM ad_metrics WHERE timestamp >= :startTime")
     fun getTotalImpressions(startTime: Long): Flow<Int>
 

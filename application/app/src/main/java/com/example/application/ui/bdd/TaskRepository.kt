@@ -25,6 +25,8 @@ interface TaskRepository {
     suspend fun insertAdMetric(metric: AdMetric)
     fun getAdImpressions(adId: Int, startTime: Long): Flow<Int>
     fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int>
+    fun getPartnerTotalImpressions(partnerId: Int, startTime: Long): Flow<Int>
+    fun getPartnerTotalUniqueUsers(partnerId: Int, startTime: Long): Flow<Int>
     fun getTotalImpressions(startTime: Long): Flow<Int>
     fun getTotalUniqueUsers(startTime: Long): Flow<Int>
 
