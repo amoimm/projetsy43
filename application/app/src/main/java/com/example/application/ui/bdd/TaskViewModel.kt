@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -27,18 +28,16 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
     fun restoreSession(userId: Int, partnerId: Int) {
         viewModelScope.launch {
             if (userId != -1) {
-                taskRepository.getUserById(userId).collect { user ->
-                    if (user != null && _currentUser.value == null) {
-                        _currentUser.value = user
-                        _isSessionRestored.value = true
-                    }
+                val user = taskRepository.getUserById(userId).first()
+                if (user != null && _currentUser.value == null) {
+                    _currentUser.value = user
+                    _isSessionRestored.value = true
                 }
             } else if (partnerId != -1) {
-                taskRepository.getPartnerById(partnerId).collect { partner ->
-                    if (partner != null && _currentPartner.value == null) {
-                        _currentPartner.value = partner
-                        _isSessionRestored.value = true
-                    }
+                val partner = taskRepository.getPartnerById(partnerId).first()
+                if (partner != null && _currentPartner.value == null) {
+                    _currentPartner.value = partner
+                    _isSessionRestored.value = true
                 }
             }
         }

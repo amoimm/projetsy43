@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.application.ui.bdd.*
 import androidx.compose.runtime.livedata.observeAsState
+import kotlinx.coroutines.flow.first
 import org.osmdroid.config.Configuration
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -103,15 +104,13 @@ class MainActivity : ComponentActivity() {
 
                 // Session restoration logic
                 LaunchedEffect(Unit) {
-                    val userProfileFlow = context.userProfileFlow
-                    userProfileFlow.collect { profile ->
-                        if (profile.loggedInUserId != -1 || profile.loggedInPartnerId != -1) {
-                            taskViewModel.restoreSession(profile.loggedInUserId, profile.loggedInPartnerId)
-                        } else {
-                            delay(500)
-                            if (currentScreen == "loading") {
-                                currentScreen = "welcome"
-                            }
+                    val profile = context.userProfileFlow.first()
+                    if (profile.loggedInUserId != -1 || profile.loggedInPartnerId != -1) {
+                        taskViewModel.restoreSession(profile.loggedInUserId, profile.loggedInPartnerId)
+                    } else {
+                        delay(500)
+                        if (currentScreen == "loading") {
+                            currentScreen = "welcome"
                         }
                     }
                 }
