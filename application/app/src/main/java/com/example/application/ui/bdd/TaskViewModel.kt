@@ -45,6 +45,8 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
 
     fun getAllToDoListsForUser(userId: Int) = taskRepository.getAllListsForUser(userId).asLiveData()
 
+    fun getAllCommunityToDoLists(userId: Int) = taskRepository.getAllListsExceptUser(userId).asLiveData()
+
     fun insertToDoList(list: ToDoList) = viewModelScope.launch {
         taskRepository.insertToDoList(list)
     }
@@ -72,6 +74,8 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
 
     fun getAdImpressions(adId: Int, startTime: Long) = taskRepository.getAdImpressions(adId, startTime)
     fun getAdUniqueUsers(adId: Int, startTime: Long) = taskRepository.getAdUniqueUsers(adId, startTime)
+    fun getPartnerTotalImpressions(partnerId: Int, startTime: Long) = taskRepository.getPartnerTotalImpressions(partnerId, startTime)
+    fun getPartnerTotalUniqueUsers(partnerId: Int, startTime: Long) = taskRepository.getPartnerTotalUniqueUsers(partnerId, startTime)
     fun getTotalImpressions(startTime: Long) = taskRepository.getTotalImpressions(startTime)
     fun getTotalUniqueUsers(startTime: Long) = taskRepository.getTotalUniqueUsers(startTime)
 

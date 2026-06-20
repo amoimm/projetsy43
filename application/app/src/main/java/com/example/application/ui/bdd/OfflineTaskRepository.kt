@@ -19,6 +19,8 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
 
     override fun getAllListsForUser(userId: Int): Flow<List<ToDoList>> = taskDao.getAllListsForUser(userId)
 
+    override fun getAllListsExceptUser(userId: Int): Flow<List<ToDoList>> = taskDao.getAllListsExceptUser(userId)
+
     override suspend fun insertToDoList(list: ToDoList) = taskDao.insertToDoList(list)
 
     override suspend fun deleteToDoList(list: ToDoList) = taskDao.deleteToDoList(list)
@@ -38,6 +40,10 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
     override fun getAdImpressions(adId: Int, startTime: Long): Flow<Int> = taskDao.getAdImpressions(adId, startTime)
 
     override fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int> = taskDao.getAdUniqueUsers(adId, startTime)
+
+    override fun getPartnerTotalImpressions(partnerId: Int, startTime: Long): Flow<Int> = taskDao.getPartnerTotalImpressions(partnerId, startTime)
+
+    override fun getPartnerTotalUniqueUsers(partnerId: Int, startTime: Long): Flow<Int> = taskDao.getPartnerTotalUniqueUsers(partnerId, startTime)
 
     override fun getTotalImpressions(startTime: Long): Flow<Int> = taskDao.getTotalImpressions(startTime)
 
