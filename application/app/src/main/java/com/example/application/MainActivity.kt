@@ -346,8 +346,8 @@ class MainActivity : ComponentActivity() {
                                     val activity = list.activities.getOrNull(actIdx)
                                     if (activity != null) {
                                         val sensorThreshold = when(activity.categorie) {
-                                            ActivityCategory.Squat -> 0.45f
-                                            ActivityCategory.Pullup -> 0.50f
+                                            ActivityCategory.SQUAT -> 0.45f
+                                            ActivityCategory.PULLUP -> 0.50f
                                             else -> 0.25f
                                         }
                                         BodyweightScreen(

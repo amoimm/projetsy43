@@ -38,7 +38,7 @@ fun BuildToDoListScreen(
 ) {
     var titleSaisie by remember { mutableStateOf("") }
     var listeActivites by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-    var categorieSelectionnee by remember { mutableStateOf(ActivityCategory.Pushup) }
+    var categorieSelectionnee by remember { mutableStateOf(ActivityCategory.PUSHUP) }
     var valeurSaisie by remember { mutableStateOf("") }
     var compteurId by remember { mutableIntStateOf(0) }
 
@@ -200,10 +200,10 @@ fun BuildToDoListScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 val cats = listOf(
-                                    ActivityCategory.Pushup to "Pushup",
-                                    ActivityCategory.Pullup to "Pullup",
-                                    ActivityCategory.Squat to "Squat",
-                                    ActivityCategory.Running to "Running"
+                                    ActivityCategory.PUSHUP to "Pushup",
+                                    ActivityCategory.PULLUP to "Pullup",
+                                    ActivityCategory.SQUAT to "Squat",
+                                    ActivityCategory.RUNNING to "Running"
                                 )
                                 cats.forEach { (cat, label) ->
                                     Button(
@@ -223,7 +223,7 @@ fun BuildToDoListScreen(
                             OutlinedTextField(
                                 value = valeurSaisie,
                                 onValueChange = { input ->
-                                    if (categorieSelectionnee == ActivityCategory.Running) {
+                                    if (categorieSelectionnee == ActivityCategory.RUNNING) {
                                         if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
                                             valeurSaisie = input.replace(',', '.')
                                         }
@@ -342,7 +342,7 @@ fun ActiviteItem(
                 color = Color.White,
                 modifier = Modifier.weight(1f)
             )
-            val suffixe = if (activite.categorie == ActivityCategory.Running) "km" else "reps"
+            val suffixe = if (activite.categorie == ActivityCategory.RUNNING) "km" else "reps"
             Text(
                 text = "${activite.valeur} $suffixe",
                 fontSize = 18.sp,

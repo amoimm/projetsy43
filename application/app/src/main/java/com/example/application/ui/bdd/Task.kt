@@ -5,7 +5,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 enum class ActivityCategory {
-    Pushup, Pullup, Squat, Running
+    PUSHUP, PULLUP, SQUAT, RUNNING
 }
 
 enum class Frequency {
@@ -52,7 +52,7 @@ data class ToDoList(
                     categorie = try { 
                         ActivityCategory.valueOf(parts[0].uppercase().replace(" ", "")) 
                     } catch (e: Exception) { 
-                        ActivityCategory.Pushup
+                        ActivityCategory.PUSHUP
                     },
                     valeur = parts[1],
                     isDone = parts[2].toBoolean(),

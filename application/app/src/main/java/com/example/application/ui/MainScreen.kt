@@ -174,9 +174,9 @@ fun ActivityRow(
     activity: ActiviteSportive,
     onPlayClick: () -> Unit
 ) {
-    val suffixe = if (activity.categorie == ActivityCategory.Running) "km" else "reps"
+    val suffixe = if (activity.categorie == ActivityCategory.RUNNING) "km" else "reps"
     val progressVal = try {
-        if (activity.categorie == ActivityCategory.Running) "%.2f".format(activity.progress.toFloat())
+        if (activity.categorie == ActivityCategory.RUNNING) "%.2f".format(activity.progress.toFloat())
         else activity.progress
     } catch (e: Exception) { "0" }
 
@@ -346,6 +346,11 @@ fun MainScreen(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
+                        // Helper to generate screen name correctly
+                        fun getScreenName(activity: ActiviteSportive): String {
+                            return activity.categorie.name.lowercase().replaceFirstChar { it.uppercase() } + "Screen"
+                        }
+
                         // DAILY Section
                         if (dailyLists.isNotEmpty()) {
                             item {
@@ -366,12 +371,8 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-
-                                            val rawCategory = toDoList.activities[activityIndex].categorie.name
-                                            val cleanCategory = rawCategory.replace(" ", "").lowercase().replaceFirstChar { it.uppercase() }
-                                            val screenName = cleanCategory + "Screen"
-
-
+                                            val activity = toDoList.activities[activityIndex]
+                                            val screenName = getScreenName(activity)
                                             onValidateClick("$screenName|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
@@ -401,7 +402,8 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-                                            val screenName = toDoList.activities[activityIndex].categorie.name.replace(" ", "") + "Screen"
+                                            val activity = toDoList.activities[activityIndex]
+                                            val screenName = getScreenName(activity)
                                             onValidateClick("$screenName|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
@@ -431,7 +433,9 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-                                            onValidateClick("${toDoList.activities[activityIndex].categorie.name}Screen|$originalIndex|$activityIndex")
+                                            val activity = toDoList.activities[activityIndex]
+                                            val screenName = getScreenName(activity)
+                                            onValidateClick("$screenName|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
                                         onShareClick = { onShareClick(toDoList) }
