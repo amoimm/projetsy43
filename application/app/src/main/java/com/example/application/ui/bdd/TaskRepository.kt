@@ -12,6 +12,7 @@ interface TaskRepository {
     suspend fun deleteAllTasks()
 
     fun getAllListsForUser(userId: Int): Flow<List<ToDoList>>
+    fun getAllListsExceptUser(userId: Int): Flow<List<ToDoList>>
     suspend fun insertToDoList(list: ToDoList)
     suspend fun deleteToDoList(list: ToDoList)
 

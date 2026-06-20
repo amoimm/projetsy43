@@ -42,7 +42,6 @@ fun VideoAdScreen(
                     
                     setVideoURI(uri)
                     setOnPreparedListener { 
-                        it.isLooping = true
                         it.start() 
                     }
                     setOnCompletionListener { onAdFinished() }
@@ -64,13 +63,13 @@ fun VideoAdScreen(
                 .padding(12.dp)
         ) {
             Text(
-                text = ad?.title ?: "Special Offer",
+                text = ad?.title ?: "Sponsorisé",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
             )
             Text(
-                text = ad?.content ?: "Check out this content while we save your progress!",
+                text = ad?.content ?: "Merci de votre patience pendant que nous préparons votre séance !",
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 14.sp
             )

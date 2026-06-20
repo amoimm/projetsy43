@@ -109,6 +109,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val toDoLists by (currentUser?.let { taskViewModel.getAllToDoListsForUser(it.id) } ?: taskViewModel.getAllToDoListsForUser(-1)).observeAsState(initial = emptyList())
+                val communityToDoLists by (currentUser?.let { taskViewModel.getAllCommunityToDoLists(it.id) } ?: taskViewModel.getAllCommunityToDoLists(-1)).observeAsState(initial = emptyList())
                 val ads by (currentPartner?.let { taskViewModel.getAdsForPartner(it.id) } ?: taskViewModel.allAds).observeAsState(initial = emptyList())
                 val allAdsForUsers by taskViewModel.allAds.observeAsState(initial = emptyList())
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
@@ -118,8 +119,8 @@ class MainActivity : ComponentActivity() {
                 var dashboardStartTime by remember { mutableLongStateOf(0L) }
                 var dashboardAdId by remember { mutableIntStateOf(-1) }
                 
-                val totalImpressions by taskViewModel.getTotalImpressions(dashboardStartTime).collectAsState(initial = 0)
-                val totalUniqueUsers by taskViewModel.getTotalUniqueUsers(dashboardStartTime).collectAsState(initial = 0)
+                val totalImpressions by (currentPartner?.let { taskViewModel.getPartnerTotalImpressions(it.id, dashboardStartTime) } ?: taskViewModel.getTotalImpressions(dashboardStartTime)).collectAsState(initial = 0)
+                val totalUniqueUsers by (currentPartner?.let { taskViewModel.getPartnerTotalUniqueUsers(it.id, dashboardStartTime) } ?: taskViewModel.getTotalUniqueUsers(dashboardStartTime)).collectAsState(initial = 0)
                 val adImpressions by taskViewModel.getAdImpressions(dashboardAdId, dashboardStartTime).collectAsState(initial = 0)
                 val adUniqueUsers by taskViewModel.getAdUniqueUsers(dashboardAdId, dashboardStartTime).collectAsState(initial = 0)
 
@@ -131,11 +132,12 @@ class MainActivity : ComponentActivity() {
                     val possibleAds = allAdsForUsers.filter { it.triggerLocation.split(",").contains(location.name) }
                     if (possibleAds.isNotEmpty()) {
                         adToShow = possibleAds[Random.nextInt(possibleAds.size)]
-                        nextScreenAfterAd = nextScreen
-                        currentScreen = "show_ad"
                     } else {
-                        currentScreen = nextScreen
+                        // Fallback to res/raw/publicite.mp4 if no targeted ad found
+                        adToShow = null
                     }
+                    nextScreenAfterAd = nextScreen
+                    currentScreen = "show_ad"
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -352,6 +354,28 @@ class MainActivity : ComponentActivity() {
                                     onLogoutClick = {
                                         taskViewModel.logout()
                                         currentScreen = "mode_selection"
+                                    },
+                                    onCommunityClick = { currentScreen = "community_lists" }
+                                )
+                            }
+                            "community_lists" -> {
+                                CommunityToDoListsScreen(
+                                    communityLists = communityToDoLists,
+                                    onBackClick = { currentScreen = "Main" },
+                                    onCopyClick = { original ->
+                                        currentUser?.let { user ->
+                                            val resetActivities = original.activities.map { it.copy(isDone = false, progress = "0") }
+                                            val resetJson = resetActivities.joinToString(";") {
+                                                "${it.categorie.name},${it.valeur},${it.isDone},${it.progress}"
+                                            }
+                                            val copiedList = original.copy(
+                                                id = 0,
+                                                userId = user.id,
+                                                activitiesJson = resetJson
+                                            )
+                                            taskViewModel.insertToDoList(copiedList)
+                                            currentScreen = "Main?created=true"
+                                        }
                                     }
                                 )
                             }
@@ -480,16 +504,16 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             "show_ad" -> {
-                                adToShow?.let { ad ->
-                                    VideoAdScreen(
-                                        modifier = Modifier.padding(innerPadding),
-                                        ad = ad,
-                                        onAdFinished = {
+                                VideoAdScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    ad = adToShow,
+                                    onAdFinished = {
+                                        adToShow?.let { ad ->
                                             taskViewModel.insertAdMetric(AdMetric(adId = ad.id, userId = currentUser?.id ?: 0, timestamp = System.currentTimeMillis()))
-                                            currentScreen = nextScreenAfterAd
                                         }
-                                    )
-                                }
+                                        currentScreen = nextScreenAfterAd
+                                    }
+                                )
                             }
                         }
                     }
