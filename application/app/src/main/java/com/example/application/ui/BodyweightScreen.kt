@@ -104,26 +104,19 @@ fun BodyweightScreen(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event == null) return
 
-                val downThreshold = when (exerciseType) {
-                    "Squat", "Pullup" -> 6f
-                    else -> 4f
-                }
-                val upThreshold = when (exerciseType) {
-                    "Squat", "Pullup" -> 14f
-                    else -> 9f
-                }
+                val downThreshold = 12f * threshold
+                val upThreshold = 28f * threshold
 
-                if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+                if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) { // take care of gravity
                     gravityValues[0] = alpha * gravityValues[0] + (1 - alpha) * event.values[0]
                     gravityValues[1] = alpha * gravityValues[1] + (1 - alpha) * event.values[1]
                     gravityValues[2] = alpha * gravityValues[2] + (1 - alpha) * event.values[2]
 
-                    val linX = event.values[0] - gravityValues[0]
+                    val linX = event.values[0] - gravityValues[0] // minus to keep only our mouvements
                     val linY = event.values[1] - gravityValues[1]
                     val linZ = event.values[2] - gravityValues[2]
                     val magnitude = sqrt(linX * linX + linY * linY + linZ * linZ)
 
-                    // Utilisation des seuils dynamiques
                     if (!wentDown && magnitude > downThreshold) { wentDown = true }
                     if (wentDown && magnitude > upThreshold) {
                         val now = System.currentTimeMillis()
