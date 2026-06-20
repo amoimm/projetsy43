@@ -27,7 +27,10 @@ data class UserProfile(
     // Partner info
     val partnerLastName: String = "",
     val partnerFirstName: String = "",
-    val partnerCompany: String = ""
+    val partnerCompany: String = "",
+    // Persistence
+    val loggedInUserId: Int = -1,
+    val loggedInPartnerId: Int = -1
 )
 
 // Keys
@@ -47,6 +50,9 @@ private val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onbo
 private val PARTNER_LAST_NAME = stringPreferencesKey("partner_last_name")
 private val PARTNER_FIRST_NAME = stringPreferencesKey("partner_first_name")
 private val PARTNER_COMPANY = stringPreferencesKey("partner_company")
+// Persistence Keys
+private val LOGGED_IN_USER_ID = intPreferencesKey("logged_in_user_id")
+private val LOGGED_IN_PARTNER_ID = intPreferencesKey("logged_in_partner_id")
 
 // Read flow
 val Context.userProfileFlow: Flow<UserProfile>
@@ -66,9 +72,33 @@ val Context.userProfileFlow: Flow<UserProfile>
             hasCompletedOnboarding = prefs[HAS_COMPLETED_ONBOARDING] ?: false,
             partnerLastName = prefs[PARTNER_LAST_NAME] ?: "",
             partnerFirstName = prefs[PARTNER_FIRST_NAME] ?: "",
-            partnerCompany = prefs[PARTNER_COMPANY] ?: ""
+            partnerCompany = prefs[PARTNER_COMPANY] ?: "",
+            loggedInUserId = prefs[LOGGED_IN_USER_ID] ?: -1,
+            loggedInPartnerId = prefs[LOGGED_IN_PARTNER_ID] ?: -1
         )
     }
+
+// Persistence functions
+suspend fun Context.saveLoggedInUserId(userId: Int) {
+    dataStore.edit { prefs ->
+        prefs[LOGGED_IN_USER_ID] = userId
+        prefs[LOGGED_IN_PARTNER_ID] = -1 // Ensure only one type is logged in
+    }
+}
+
+suspend fun Context.saveLoggedInPartnerId(partnerId: Int) {
+    dataStore.edit { prefs ->
+        prefs[LOGGED_IN_PARTNER_ID] = partnerId
+        prefs[LOGGED_IN_USER_ID] = -1
+    }
+}
+
+suspend fun Context.clearLoggedInSession() {
+    dataStore.edit { prefs ->
+        prefs[LOGGED_IN_USER_ID] = -1
+        prefs[LOGGED_IN_PARTNER_ID] = -1
+    }
+}
 
 // Atomic update functions
 suspend fun Context.updatePersonalProfile(name: String, age: String, weight: String, height: String) {
