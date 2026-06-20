@@ -3,6 +3,7 @@ package com.example.application
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.example.application.ui.MainScreen
+import com.example.application.ui.bdd.Frequency
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.theme.ApplicationTheme
 import org.junit.Rule
@@ -33,7 +34,7 @@ class MainScreenUiTest {
     @Test
     fun mainScreen_showsLists_whenProvided() {
         val testLists = listOf(
-            ToDoList(id = 1, title = "Morning Workout", date = "10/10/2024", activitiesJson = "Pushup,20,false,0", frequency = "DAILY")
+            ToDoList(id = 1, userId = 1, title = "Morning Workout", date = "25/06/2026", activitiesJson = "Pushup,20,false,0", frequency = Frequency.DAILY)
         )
 
         composeTestRule.setContent {
@@ -54,7 +55,7 @@ class MainScreenUiTest {
     @Test
     fun mainScreen_expandCard_showsActivities() {
         val testLists = listOf(
-            ToDoList(id = 1, title = "Gym", date = "10/10/2024", activitiesJson = "Pushup,50,false,0", frequency = "ONCE")
+            ToDoList(id = 1, userId = 1, title = "Gym", date = "25/06/2026", activitiesJson = "Pushup,50,false,0", frequency = Frequency.ONCE)
         )
 
         composeTestRule.setContent {

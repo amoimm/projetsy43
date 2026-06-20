@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.application.ui.bdd.Frequency
+import com.example.application.ui.bdd.Partner
 import com.example.application.ui.bdd.TaskDao
 import com.example.application.ui.bdd.TaskDatabase
 import com.example.application.ui.bdd.ToDoList
+import com.example.application.ui.bdd.User
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -31,6 +34,13 @@ class TaskDaoTest {
             .allowMainThreadQueries()
             .build()
         taskDao = db.taskDao()
+
+        runBlocking {
+            // Insert a dummy user to satisfy foreign key constraints for ToDoLists
+            taskDao.insertUser(User(id = 1, username = "testuser", mdp = "password"))
+            // Insert a dummy partner for future ad tests
+            taskDao.insertPartner(Partner(id = 1, username = "testpartner", mdp = "password"))
+        }
     }
 
     @After
@@ -44,13 +54,14 @@ class TaskDaoTest {
     fun daoInsertAndGetLists() = runBlocking {
         val list = ToDoList(
             id = 1,
+            userId = 1,
             title = "Test List",
             date = "01/01/2024",
             activitiesJson = "Pushup,10,false,0",
-            frequency = "ONCE"
+            frequency = Frequency.ONCE,
         )
         taskDao.insertToDoList(list)
-        val allLists = taskDao.getAllLists().first()
+        val allLists = taskDao.getAllListsForUser(1).first()
         assertEquals(allLists[0].title, "Test List")
         assertEquals(allLists[0].activities.size, 1)
     }
@@ -60,13 +71,15 @@ class TaskDaoTest {
     fun daoDeleteList() = runBlocking {
         val list = ToDoList(
             id = 2,
+            userId = 1,
             title = "To Delete",
             date = "01/01/2024",
-            activitiesJson = "Running,5,false,0"
+            activitiesJson = "Running,5,false,0",
+            frequency = Frequency.ONCE
         )
         taskDao.insertToDoList(list)
         taskDao.deleteToDoList(list)
-        val allLists = taskDao.getAllLists().first()
+        val allLists = taskDao.getAllListsForUser(1).first()
         assertTrue(allLists.isEmpty())
     }
 }
