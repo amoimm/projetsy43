@@ -410,7 +410,7 @@ class MainActivity : ComponentActivity() {
                             "Build_ToDo_List" -> BuildToDoListScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 onBackClick = { currentScreen = "Main" },
-                                onValidateClick = { newList ->
+                                onSaveClick = { newList ->
                                     taskViewModel.insertToDoList(newList)
                                     triggerAd(AdTriggerLocation.AFTER_LIST, "Main?created=true")
                                 }
