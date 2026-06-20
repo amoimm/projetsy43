@@ -38,10 +38,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.application.ui.bdd.*
 import androidx.compose.runtime.livedata.observeAsState
+import org.osmdroid.config.Configuration
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import org.osmdroid.config.Configuration
 import kotlin.random.Random
 
 class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
@@ -95,19 +95,16 @@ class MainActivity : ComponentActivity() {
             }
 
             ApplicationTheme {
-                val userProfileData by userProfileFlow.collectAsState(initial = null)
+                val currentUser by taskViewModel.currentUser.collectAsState()
+                val currentPartner by taskViewModel.currentPartner.collectAsState()
                 var currentScreen by remember { mutableStateOf("loading") }
+                var authError by remember { mutableStateOf<String?>(null) }
 
                 // Animation logic for startup
-                LaunchedEffect(userProfileData) {
-                    if (userProfileData != null && currentScreen == "loading") {
-                        if (userProfileData!!.hasCompletedOnboarding) {
-                            currentScreen = "welcome_back"
-                            delay(2500)
-                            currentScreen = "Main"
-                        } else {
-                            currentScreen = "welcome"
-                        }
+                LaunchedEffect(Unit) {
+                    delay(500)
+                    if (currentScreen == "loading") {
+                        currentScreen = "welcome"
                     }
                 }
 
@@ -156,9 +153,9 @@ class MainActivity : ComponentActivity() {
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "Welcome back !",
+                                        text = "Welcome back ${currentUser?.name ?: ""}!",
                                         color = Color.White,
-                                        fontSize = 48.sp,
+                                        fontSize = 32.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -166,133 +163,152 @@ class MainActivity : ComponentActivity() {
                             "welcome" -> WelcomeScreen(modifier = Modifier.padding(innerPadding), onContinueClick = { currentScreen = "mode_selection" })
                             "mode_selection" -> ModeSelectionScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onUserModeSelected = {
-                                    if (userProfileData?.hasCompletedOnboarding == true) {
-                                        currentScreen = "Main"
-                                    } else currentScreen = "personal_info"
+                                onUserModeSelected = { 
+                                    if (currentUser != null) currentScreen = "Main"
+                                    else currentScreen = "login_user"
                                 },
-                                onPartnerModeSelected = {
-                                    if (userProfileData?.partnerLastName?.isNotBlank() == true) currentScreen = "partner_dashboard"
-                                    else currentScreen = "partner_info"
+                                onPartnerModeSelected = { 
+                                    if (currentPartner != null) currentScreen = "partner_dashboard"
+                                    else currentScreen = "login_partner"
+                                }
+                            )
+                            "login_user" -> LoginScreen(
+                                isPartner = false,
+                                onLoginClick = { u, p ->
+                                    taskViewModel.loginUser(u, p) { success ->
+                                        if (success != null) {
+                                            authError = null
+                                            currentScreen = "welcome_back"
+                                            coroutineScope.launch {
+                                                delay(2000)
+                                                val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                                                if (success.lastMotivationDate != today) {
+                                                    currentScreen = "HowYouFeel"
+                                                } else {
+                                                    currentScreen = "Main"
+                                                }
+                                            }
+                                        } else {
+                                            authError = "Invalid credentials"
+                                        }
+                                    }
+                                },
+                                onRegisterClick = { currentScreen = "personal_info" },
+                                onBackClick = { currentScreen = "mode_selection" },
+                                errorMessage = authError
+                            )
+                            "login_partner" -> LoginScreen(
+                                isPartner = true,
+                                onLoginClick = { u, p ->
+                                    taskViewModel.loginPartner(u, p) { success ->
+                                        if (success != null) {
+                                            authError = null
+                                            currentScreen = "partner_dashboard"
+                                        } else {
+                                            authError = "Invalid credentials"
+                                        }
+                                    }
+                                },
+                                onRegisterClick = { currentScreen = "partner_info" },
+                                onBackClick = { currentScreen = "mode_selection" },
+                                errorMessage = authError
+                            )
+                            "personal_info" -> PersonalInfoScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                initialUsername = currentUser?.username ?: "",
+                                initialMdp = currentUser?.mdp ?: "",
+                                initialName = currentUser?.name ?: "",
+                                initialAge = currentUser?.age ?: "",
+                                initialWeight = currentUser?.weight ?: "",
+                                initialHeight = currentUser?.height ?: "",
+                                onBackClick = { 
+                                    if (currentUser != null) currentScreen = "settings_choice"
+                                    else currentScreen = "login_user"
+                                },
+                                onValidateClick = { u, p, n, a, w, h ->
+                                    val newUser = User(
+                                        id = currentUser?.id ?: 0,
+                                        username = u,
+                                        mdp = p,
+                                        name = n,
+                                        age = a,
+                                        weight = w,
+                                        height = h,
+                                        lastMotivationDate = currentUser?.lastMotivationDate ?: ""
+                                    )
+                                    if (currentUser == null) {
+                                        taskViewModel.registerUser(newUser) {
+                                            currentScreen = "capacite"
+                                        }
+                                    } else {
+                                        taskViewModel.updateCurrentUser(newUser)
+                                        currentScreen = "settings_choice"
+                                    }
                                 }
                             )
                             "partner_info" -> PartnerInfoScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                initialLastName = userProfileData?.partnerLastName ?: "",
-                                initialFirstName = userProfileData?.partnerFirstName ?: "",
-                                initialCompany = userProfileData?.partnerCompany ?: "",
+                                initialUsername = currentPartner?.username ?: "",
+                                initialMdp = currentPartner?.mdp ?: "",
+                                initialLastName = currentPartner?.lastName ?: "",
+                                initialFirstName = currentPartner?.firstName ?: "",
+                                initialCompany = currentPartner?.company ?: "",
                                 onBackClick = { 
-                                    if (userProfileData?.partnerLastName?.isNotBlank() == true) currentScreen = "partner_dashboard"
-                                    else currentScreen = "mode_selection"
+                                    if (currentPartner != null) currentScreen = "settings_choice"
+                                    else currentScreen = "login_partner"
                                 },
-                                onValidateClick = { ln, fn, co ->
-                                    coroutineScope.launch { context.updatePartnerProfile(ln, fn, co) }
-                                    currentScreen = "partner_dashboard"
-                                }
-                            )
-                            "partner_dashboard" -> PartnerDashboardScreen(
-                                ads = ads,
-                                totalImpressions = totalImpressions,
-                                totalUniqueUsers = totalUniqueUsers,
-                                adSpecificImpressions = adImpressions,
-                                adSpecificUniqueUsers = adUniqueUsers,
-                                onPeriodChange = { dashboardStartTime = it },
-                                onAdSelectionChange = { dashboardAdId = it },
-                                modifier = Modifier.padding(innerPadding),
-                                onBackClick = { 
-                                    currentScreen = "mode_selection"
-                                },
-                                onSettingsClick = { currentScreen = "partner_info" },
-                                onMyAdsClick = { currentScreen = "my_ads" }
-                            )
-                            "my_ads" -> MyAdsScreen(
-                                ads = ads,
-                                onBackClick = { currentScreen = "partner_dashboard" },
-                                onAddAdClick = { currentScreen = "add_ad" },
-                                onDeleteAdClick = { ad -> taskViewModel.deleteAd(ad) },
-                                onPlayAdClick = { ad ->
-                                    adToShow = ad
-                                    nextScreenAfterAd = "my_ads"
-                                    currentScreen = "show_ad"
-                                }
-                            )
-                            "add_ad" -> AddAdScreen(
-                                onBackClick = { currentScreen = "my_ads" },
-                                onSaveAdClick = { ad ->
-                                    taskViewModel.insertAd(ad)
-                                    currentScreen = "my_ads"
-                                }
-                            )
-                            "show_ad" -> VideoAdScreen(
-                                ad = adToShow,
-                                onAdFinished = { 
-                                    // Insert metric
-                                    adToShow?.let {
-                                        val metric = AdMetric(adId = it.id, userName = userProfileData?.name ?: "Guest")
-                                        taskViewModel.insertAdMetric(metric)
+                                onValidateClick = { u, p, ln, fn, co ->
+                                    val newPartner = Partner(
+                                        id = currentPartner?.id ?: 0,
+                                        username = u,
+                                        mdp = p,
+                                        lastName = ln,
+                                        firstName = fn,
+                                        company = co
+                                    )
+                                    if (currentPartner == null) {
+                                        taskViewModel.registerPartner(newPartner) {
+                                            currentScreen = "partner_dashboard"
+                                        }
+                                    } else {
+                                        taskViewModel.updateCurrentPartner(newPartner)
+                                        currentScreen = "settings_choice"
                                     }
-                                    currentScreen = nextScreenAfterAd 
                                 }
                             )
-                            "settings_choice" -> SettingsChoiceScreen(
-                                onBackClick = { currentScreen = "Main" },
-                                onPersonalInfoClick = { currentScreen = "personal_info" },
-                                onCapacityClick = { currentScreen = "capacite_info" },
-                                onMotivationClick = { currentScreen = "HowYouFeel" }
-                            )
-                            "personal_info" -> PersonalInfoScreen(
+                            "capacite" -> CapaciteScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                initialName = userProfileData?.name ?: "",
-                                initialAge = userProfileData?.age ?: "",
-                                initialWeight = userProfileData?.weight ?: "",
-                                initialHeight = userProfileData?.height ?: "",
+                                initialPushups = currentUser?.maxPushups ?: "0",
+                                initialPullups = currentUser?.maxPullups ?: "0",
+                                initialSquats = currentUser?.maxSquats ?: "0",
+                                initialRunningKm = currentUser?.maxRunningKm ?: "0",
                                 onBackClick = { 
-                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
-                                    else currentScreen = "mode_selection"
-                                },
-                                onValidateClick = { n, a, w, h ->
-                                    coroutineScope.launch { context.updatePersonalProfile(n, a, w, h) }
-                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
-                                    else currentScreen = "capacite_info"
-                                }
-                            )
-                            "capacite_info" -> CapaciteScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                initialPushups = userProfileData?.maxPushups ?: "0",
-                                initialPullups = userProfileData?.maxPullups ?: "0",
-                                initialSquats = userProfileData?.maxSquats ?: "0",
-                                initialRunningKm = userProfileData?.maxRunningKm ?: "0",
-                                onBackClick = { 
-                                    if (userProfileData?.hasCompletedOnboarding == true) currentScreen = "settings_choice"
+                                    if (currentUser != null) currentScreen = "settings_choice"
                                     else currentScreen = "personal_info" 
                                 },
-                                onValidateClick = { push, pull, squat, run ->
-                                    coroutineScope.launch {
-                                        context.updateCapacity(push, pull, squat, run)
-                                    }
-                                    if (userProfileData?.hasCompletedOnboarding == true) {
-                                        currentScreen = "settings_choice"
-                                    } else {
+                                onValidateClick = { pushups, pullups, squats, runKm ->
+                                    currentUser?.let { user ->
+                                        val updatedUser = user.copy(
+                                            maxPushups = pushups,
+                                            maxPullups = pullups,
+                                            maxSquats = squats,
+                                            maxRunningKm = runKm
+                                        )
+                                        taskViewModel.updateCurrentUser(updatedUser)
                                         currentScreen = "HowYouFeel"
                                     }
                                 }
                             )
                             "HowYouFeel" -> HowYouFeelScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                userProfile = userProfileData,
+                                user = currentUser,
                                 onValidateClick = { generatedList, level ->
-                                    coroutineScope.launch {
-                                        context.updateMotivation(level)
+                                    currentUser?.let { user ->
+                                        val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                                        taskViewModel.updateCurrentUser(user.copy(lastMotivationDate = today))
                                         taskViewModel.insertToDoList(generatedList)
                                     }
-                                    currentScreen = "Main" 
-                                }
-                            )
-                            "Build_ToDo_List" -> BuildToDoListScreen(
-                                onBackClick = { currentScreen = "Main" },
-                                onValidateClick = { newList ->
-                                    taskViewModel.insertToDoList(newList)
-                                    triggerAd(AdTriggerLocation.AFTER_LIST, "Main?created=true")
+                                    currentScreen = "Main"
                                 }
                             )
                             "Main", "Main?created=true" -> {
@@ -311,122 +327,147 @@ class MainActivity : ComponentActivity() {
                                             currentScreen = location
                                         }
                                     },
-                                    onDeleteClick = { list -> 
+                                    onDeleteClick = { list ->
                                         taskViewModel.deleteToDoList(list)
                                         triggerAd(AdTriggerLocation.AFTER_DELETE, "Main")
                                     },
                                     onSettingsClick = { currentScreen = "settings_choice" },
-                                    onLogoutClick = { currentScreen = "mode_selection" }
+                                    onLogoutClick = {
+                                        taskViewModel.logout()
+                                        currentScreen = "mode_selection"
+                                    }
                                 )
                             }
                             "PushupScreen", "PullupScreen", "SquatScreen" -> {
-                                val exerciseData = remember(activeListIndex, activeActivityIndex, toDoLists) {
-                                    try {
-                                        val list = toDoLists.getOrNull(activeListIndex ?: -1)
-                                        val activity = list?.activities?.getOrNull(activeActivityIndex ?: -1)
-
-                                        if (activity != null) {
-                                            Triple(
-                                                activity.categorie, // ActivityCategory enum
-                                                activity.valeur.toInt(),
-                                                activity.progress.toIntOrNull() ?: 0
-                                            )
-                                        } else {
-                                            Triple(ActivityCategory.PUSHUP, 10, 0)
+                                val listIdx = activeListIndex
+                                val actIdx = activeActivityIndex
+                                if (listIdx != null && actIdx != null && listIdx < toDoLists.size) {
+                                    val list = toDoLists[listIdx]
+                                    val activity = list.activities.getOrNull(actIdx)
+                                    if (activity != null) {
+                                        val sensorThreshold = when(activity.categorie) {
+                                            ActivityCategory.Squat -> 0.45f
+                                            ActivityCategory.Pullup -> 0.50f
+                                            else -> 0.25f
                                         }
-                                    } catch (e: Exception) {
-                                        Triple(ActivityCategory.PUSHUP, 10, 0)
-                                    }
-                                }
-
-                                val (exerciseId, target, initialProgress) = exerciseData
-
-                                val sensorThreshold = when(exerciseId) {
-                                    ActivityCategory.SQUAT -> 0.45f
-                                    ActivityCategory.PULLUP -> 0.50f
-                                    else -> 0.25f
-                                }
-
-                                BodyweightScreen(
-                                    modifier = Modifier.padding(innerPadding),
-                                    initialCount = initialProgress,
-                                    targetObjective = target,
-                                    exerciseType = exerciseId.name, // Pass name as String if BodyweightScreen expects it
-                                    threshold = sensorThreshold,
-                                    onContinueClick = { finalCount ->
-                                        if (activeListIndex != null && activeActivityIndex != null) {
-                                            coroutineScope.launch {
-                                                try {
-                                                    val list = toDoLists[activeListIndex!!]
-                                                    val activities = list.activitiesJson.split(";").toMutableList()
-                                                    val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-
-                                                    while (parts.size < 4) parts.add("0")
-                                                    parts[3] = finalCount.toString()
-
-                                                    if (finalCount >= target) {
-                                                        parts[2] = "true"
-                                                        context.markExerciseDone()
-                                                    }
-
-                                                    activities[activeActivityIndex!!] = parts.joinToString(",")
-                                                    val updatedList = list.copy(activitiesJson = activities.joinToString(";"))
-                                                    taskViewModel.insertToDoList(updatedList)
-
-                                                    if (finalCount >= target) {
-                                                        triggerAd(AdTriggerLocation.AFTER_PUSHUP, "Main")
-                                                    } else {
-                                                        currentScreen = "Main"
-                                                    }
-                                                } catch (e: Exception) {
+                                        BodyweightScreen(
+                                            modifier = Modifier.padding(innerPadding),
+                                            initialCount = activity.progress.toIntOrNull() ?: 0,
+                                            targetObjective = activity.valeur.toIntOrNull() ?: 20,
+                                            exerciseType = activity.categorie.name,
+                                            threshold = sensorThreshold,
+                                            onContinueClick = { finalCount ->
+                                                val updatedActivities = list.activities.toMutableList()
+                                                updatedActivities[actIdx] = activity.copy(
+                                                    progress = finalCount.toString(),
+                                                    isDone = finalCount >= (activity.valeur.toIntOrNull() ?: 20)
+                                                )
+                                                val activitiesString = updatedActivities.joinToString(";") {
+                                                    "${it.categorie.name},${it.valeur},${it.isDone},${it.progress}"
+                                                }
+                                                taskViewModel.insertToDoList(list.copy(activitiesJson = activitiesString))
+                                                if (finalCount >= (activity.valeur.toIntOrNull() ?: 20)) {
+                                                    triggerAd(AdTriggerLocation.AFTER_PUSHUP, "Main")
+                                                } else {
                                                     currentScreen = "Main"
                                                 }
                                             }
-                                        }
+                                        )
                                     }
-                                )
+                                }
                             }
                             "RunningScreen" -> {
-                                val (target, initialProgress) = remember(activeListIndex, activeActivityIndex, toDoLists) {
-                                    try {
-                                        val list = toDoLists[activeListIndex!!]
-                                        val activity = list.activitiesJson.split(";")[activeActivityIndex!!]
-                                        val parts = activity.split(",")
-                                        parts[1].toFloat() to (if (parts.size >= 4) parts[3].toFloat() else 0f)
-                                    } catch (e: Exception) { 5.0f to 0.0f }
-                                }
-                                RunningScreen(
-                                    modifier = Modifier.padding(innerPadding),
-                                    initialCount = initialProgress,
-                                    targetObjective = target,
-                                    onContinueClick = { finalDistance ->
-                                        if (activeListIndex != null && activeActivityIndex != null) {
-                                            try {
-                                                if (activeListIndex!! < toDoLists.size) {
-                                                    val list = toDoLists[activeListIndex!!]
-                                                    val activities = list.activitiesJson.split(";").toMutableList()
-                                                    if (activeActivityIndex!! < activities.size) {
-                                                        val parts = activities[activeActivityIndex!!].split(",").toMutableList()
-                                                        while (parts.size < 4) parts.add("0")
-                                                        parts[3] = finalDistance.toString()
-                                                        if (finalDistance >= target) {
-                                                            parts[2] = "true"
-                                                            coroutineScope.launch { context.markExerciseDone() }
-                                                        }
-                                                        activities[activeActivityIndex!!] = parts.joinToString(",")
-                                                        taskViewModel.insertToDoList(list.copy(activitiesJson = activities.joinToString(";")))
-                                                        
-                                                        if (finalDistance >= target) {
-                                                            triggerAd(AdTriggerLocation.AFTER_RUNNING, "Main")
-                                                        } else {
-                                                            currentScreen = "Main"
-                                                        }
-                                                    }
+                                val listIdx = activeListIndex
+                                val actIdx = activeActivityIndex
+                                if (listIdx != null && actIdx != null && listIdx < toDoLists.size) {
+                                    val list = toDoLists[listIdx]
+                                    val activity = list.activities.getOrNull(actIdx)
+                                    if (activity != null) {
+                                        RunningScreen(
+                                            modifier = Modifier.padding(innerPadding),
+                                            initialCount = activity.progress.toFloatOrNull() ?: 0.0f,
+                                            targetObjective = activity.valeur.toFloatOrNull() ?: 5.0f,
+                                            onContinueClick = { finalDistance ->
+                                                val updatedActivities = list.activities.toMutableList()
+                                                updatedActivities[actIdx] = activity.copy(
+                                                    progress = finalDistance.toString(),
+                                                    isDone = finalDistance >= (activity.valeur.toFloatOrNull() ?: 5.0f)
+                                                )
+                                                val activitiesString = updatedActivities.joinToString(";") {
+                                                    "${it.categorie.name},${it.valeur},${it.isDone},${it.progress}"
                                                 }
-                                            } catch (e: Exception) { currentScreen = "Main" }
-                                        } else currentScreen = "Main"
+                                                taskViewModel.insertToDoList(list.copy(activitiesJson = activitiesString))
+                                                if (finalDistance >= (activity.valeur.toFloatOrNull() ?: 5.0f)) {
+                                                    triggerAd(AdTriggerLocation.AFTER_RUNNING, "Main")
+                                                } else {
+                                                    currentScreen = "Main"
+                                                }
+                                            }
+                                        )
                                     }
-                                )
+                                }
+                            }
+                            "Build_ToDo_List" -> BuildToDoListScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onBackClick = { currentScreen = "Main" },
+                                onValidateClick = { newList ->
+                                    taskViewModel.insertToDoList(newList)
+                                    triggerAd(AdTriggerLocation.AFTER_LIST, "Main?created=true")
+                                }
+                            )
+                            "settings_choice" -> SettingsChoiceScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onBackClick = {
+                                    if (currentUser != null) currentScreen = "Main"
+                                    else currentScreen = "partner_dashboard"
+                                },
+                                onPersonalInfoClick = { currentScreen = "personal_info" },
+                                onCapacityClick = { currentScreen = "capacite" },
+                                onMotivationClick = { currentScreen = "HowYouFeel" }
+                            )
+                            "partner_dashboard" -> PartnerDashboardScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                ads = ads,
+                                totalImpressions = totalImpressions,
+                                totalUniqueUsers = totalUniqueUsers,
+                                adSpecificImpressions = adImpressions,
+                                adSpecificUniqueUsers = adUniqueUsers,
+                                onPeriodChange = { dashboardStartTime = it },
+                                onAdSelectionChange = { dashboardAdId = it },
+                                onBackClick = { currentScreen = "mode_selection" },
+                                onSettingsClick = { currentScreen = "partner_info" },
+                                onMyAdsClick = { currentScreen = "my_ads" }
+                            )
+                            "my_ads" -> MyAdsScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                ads = ads,
+                                onBackClick = { currentScreen = "partner_dashboard" },
+                                onAddAdClick = { currentScreen = "add_ad" },
+                                onDeleteAdClick = { ad -> taskViewModel.deleteAd(ad) },
+                                onPlayAdClick = { ad ->
+                                    adToShow = ad
+                                    nextScreenAfterAd = "my_ads"
+                                    currentScreen = "show_ad"
+                                }
+                            )
+                            "add_ad" -> AddAdScreen(
+                                onBackClick = { currentScreen = "my_ads" },
+                                onSaveAdClick = { ad ->
+                                    taskViewModel.insertAd(ad)
+                                    currentScreen = "my_ads"
+                                }
+                            )
+                            "show_ad" -> {
+                                adToShow?.let { ad ->
+                                    VideoAdScreen(
+                                        modifier = Modifier.padding(innerPadding),
+                                        ad = ad,
+                                        onAdFinished = {
+                                            taskViewModel.insertAdMetric(AdMetric(adId = ad.id, userName = currentUser?.name ?: "Guest", timestamp = System.currentTimeMillis()))
+                                            currentScreen = nextScreenAfterAd
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

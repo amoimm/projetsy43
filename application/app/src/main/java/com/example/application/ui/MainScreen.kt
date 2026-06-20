@@ -174,9 +174,9 @@ fun ActivityRow(
     activity: ActiviteSportive,
     onPlayClick: () -> Unit
 ) {
-    val suffixe = if (activity.categorie == ActivityCategory.RUNNING) "km" else "reps"
+    val suffixe = if (activity.categorie == ActivityCategory.Running) "km" else "reps"
     val progressVal = try {
-        if (activity.categorie == ActivityCategory.RUNNING) "%.2f".format(activity.progress.toFloat())
+        if (activity.categorie == ActivityCategory.Running) "%.2f".format(activity.progress.toFloat())
         else activity.progress
     } catch (e: Exception) { "0" }
 
@@ -271,7 +271,7 @@ fun MainScreen(
     onSettingsClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
-    val expandedCardIds = remember { mutableStateOf(mutableListOf<Int>()) }.value
+    val expandedCardIds = remember { mutableStateListOf<Int>() }
     
     // Toast state
     var showToast by remember { mutableStateOf(false) }

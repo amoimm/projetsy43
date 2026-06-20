@@ -2,8 +2,10 @@ package com.example.application.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -14,11 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
-import com.example.application.ui.theme.ApplicationTheme
 
 @Composable
 fun CapaciteScreen(
@@ -39,9 +39,14 @@ fun CapaciteScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = 24.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 32.dp, bottom = 100.dp)
+        ) {
             IconButton(onClick = onBackClick, modifier = Modifier.padding(bottom = 8.dp)) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -63,7 +68,7 @@ fun CapaciteScreen(
             InfoInputField(
                 label = "Pushups (Max)",
                 value = pushup,
-                onValueChange = { if (it.all { char -> char.isDigit() }) pushup = it },
+                onValueChange = { if (it.all { char -> char.isDigit() } || it.isEmpty()) pushup = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -72,7 +77,7 @@ fun CapaciteScreen(
             InfoInputField(
                 label = "Pullups (Max)",
                 value = pullup,
-                onValueChange = { if (it.all { char -> char.isDigit() }) pullup = it },
+                onValueChange = { if (it.all { char -> char.isDigit() } || it.isEmpty()) pullup = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -81,7 +86,7 @@ fun CapaciteScreen(
             InfoInputField(
                 label = "Squats (Max)",
                 value = squat,
-                onValueChange = { if (it.all { char -> char.isDigit() }) squat = it },
+                onValueChange = { if (it.all { char -> char.isDigit() } || it.isEmpty()) squat = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -97,7 +102,6 @@ fun CapaciteScreen(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
-            Spacer(modifier = Modifier.height(100.dp))
         }
 
         val isFormValid = pushup.isNotBlank()

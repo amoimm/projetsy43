@@ -2,8 +2,10 @@ package com.example.application.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -14,22 +16,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
-import com.example.application.ui.theme.ApplicationTheme
 
 @Composable
 fun PersonalInfoScreen(
     modifier: Modifier = Modifier,
+    initialUsername: String = "",
+    initialMdp: String = "",
     initialName: String = "",
     initialAge: String = "",
     initialWeight: String = "",
     initialHeight: String = "",
     onBackClick: () -> Unit = {},
-    onValidateClick: (name: String, age: String, weight: String, height: String) -> Unit = { _, _, _, _ -> }
+    onValidateClick: (username: String, mdp: String, name: String, age: String, weight: String, height: String) -> Unit = { _, _, _, _, _, _ -> }
 ) {
+    var username by remember(initialUsername) { mutableStateOf(initialUsername) }
+    var mdp by remember(initialMdp) { mutableStateOf(initialMdp) }
     var name by remember(initialName) { mutableStateOf(initialName) }
     var age by remember(initialAge) { mutableStateOf(initialAge) }
     var weight by remember(initialWeight) { mutableStateOf(initialWeight) }
@@ -39,9 +45,14 @@ fun PersonalInfoScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = 24.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 32.dp, bottom = 100.dp)
+        ) {
             IconButton(onClick = onBackClick, modifier = Modifier.padding(bottom = 8.dp)) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -61,9 +72,31 @@ fun PersonalInfoScreen(
             Spacer(modifier = Modifier.height(30.dp))
 
             InfoInputField(
+                label = "Username",
+                value = username,
+                onValueChange = { username = it }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            InfoInputField(
+                label = "Password",
+                value = mdp,
+                onValueChange = { mdp = it },
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            InfoInputField(
                 label = stringResource(id = R.string.personal_info_name),
                 value = name,
-                onValueChange = { name = it }
+                onValueChange = { input ->
+                    // Empêcher les chiffres et les virgules
+                    if (!input.any { it.isDigit() || it == ',' }) {
+                        name = input
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -102,10 +135,10 @@ fun PersonalInfoScreen(
             )
         }
 
-        val isFormValid = name.isNotBlank() && age.isNotBlank() && weight.isNotBlank() && height.isNotBlank()
+        val isFormValid = username.isNotBlank() && mdp.isNotBlank() && name.isNotBlank() && age.isNotBlank() && weight.isNotBlank() && height.isNotBlank()
 
         Button(
-            onClick = { onValidateClick(name, age, weight, height) },
+            onClick = { onValidateClick(username, mdp, name, age, weight, height) },
             enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
@@ -134,7 +167,8 @@ fun InfoInputField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -160,6 +194,7 @@ fun InfoInputField(
             ),
             shape = RoundedCornerShape(8.dp),
             keyboardOptions = keyboardOptions,
+            visualTransformation = visualTransformation,
             singleLine = true
         )
     }

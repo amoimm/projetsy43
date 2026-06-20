@@ -26,4 +26,16 @@ interface TaskRepository {
     fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int>
     fun getTotalImpressions(startTime: Long): Flow<Int>
     fun getTotalUniqueUsers(startTime: Long): Flow<Int>
+
+    // Users
+    suspend fun insertUser(user: User): Long
+    suspend fun updateUser(user: User)
+    suspend fun getUserByUsername(username: String): User?
+    fun getUserById(id: Int): Flow<User?>
+
+    // Partners
+    suspend fun insertPartner(partner: Partner): Long
+    suspend fun updatePartner(partner: Partner)
+    suspend fun getPartnerByUsername(username: String): Partner?
+    fun getPartnerById(id: Int): Flow<Partner?>
 }

@@ -61,4 +61,33 @@ interface TaskDao {
 
     @Query("SELECT COUNT(DISTINCT userName) FROM ad_metrics WHERE timestamp >= :startTime")
     fun getTotalUniqueUsers(startTime: Long): Flow<Int>
+
+    // Users
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUser(user: User): Long
+
+    @Update
+    suspend fun updateUser(user: User)
+
+    @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
+    suspend fun getUserByUsername(username: String): User?
+
+    @Query("SELECT * FROM users WHERE id = :id LIMIT 1")
+    fun getUserById(id: Int): Flow<User?>
+    
+    @Query("SELECT * FROM users")
+    suspend fun getAllUsers(): List<User>
+
+    // Partners
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPartner(partner: Partner): Long
+
+    @Update
+    suspend fun updatePartner(partner: Partner)
+
+    @Query("SELECT * FROM partners WHERE username = :username LIMIT 1")
+    suspend fun getPartnerByUsername(username: String): Partner?
+
+    @Query("SELECT * FROM partners WHERE id = :id LIMIT 1")
+    fun getPartnerById(id: Int): Flow<Partner?>
 }

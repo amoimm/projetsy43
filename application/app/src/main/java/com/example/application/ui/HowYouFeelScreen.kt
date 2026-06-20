@@ -18,12 +18,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
-import com.example.application.UserProfile
 import com.example.application.ui.bdd.ToDoList
+import com.example.application.ui.bdd.User
 import com.example.application.ui.theme.ApplicationTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -43,7 +42,7 @@ fun generateTodolist(motivation: Float, maxpushups: Int, maxpullups: Int, maxsqu
         else -> "Stay in movement !"
     }
 
-    val activities = "Pushup,$pushupGoal,false;Pullup,$pullupGoal,false;Squat,$squatGoal,false;Running,$runningGoal,false"
+    val activities = "PUSHUP,$pushupGoal,false;PULLUP,$pullupGoal,false;SQUAT,$squatGoal,false;RUNNING,$runningGoal,false"
 
     return ToDoList(
         title = title,
@@ -55,12 +54,10 @@ fun generateTodolist(motivation: Float, maxpushups: Int, maxpullups: Int, maxsqu
 @Composable
 fun HowYouFeelScreen(
     modifier: Modifier = Modifier,
-    userProfile: UserProfile?,
+    user: User?,
     onValidateClick: (ToDoList, Float) -> Unit
 ) {
-    var fillPercentage by remember(userProfile?.lastMotivationLevel) {
-        mutableStateOf(userProfile?.lastMotivationLevel ?: 0.5f) 
-    }
+    var fillPercentage by remember { mutableStateOf(0.5f) }
 
     Box(
         modifier = modifier
@@ -163,10 +160,10 @@ fun HowYouFeelScreen(
 
         Button(
             onClick = {
-                val maxPush = userProfile?.maxPushups?.toIntOrNull() ?: 15
-                val maxPull = userProfile?.maxPullups?.toIntOrNull() ?: 5
-                val maxS = userProfile?.maxSquats?.toIntOrNull() ?: 20
-                val maxK = userProfile?.maxRunningKm?.toDoubleOrNull() ?: 3.0
+                val maxPush = user?.maxPushups?.toIntOrNull() ?: 15
+                val maxPull = user?.maxPullups?.toIntOrNull() ?: 5
+                val maxS = user?.maxSquats?.toIntOrNull() ?: 20
+                val maxK = user?.maxRunningKm?.toDoubleOrNull() ?: 3.0
 
                 val autoList = generateTodolist(fillPercentage, maxPush, maxPull, maxS, maxK)
 

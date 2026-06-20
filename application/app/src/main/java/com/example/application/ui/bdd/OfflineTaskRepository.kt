@@ -40,4 +40,16 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
     override fun getTotalImpressions(startTime: Long): Flow<Int> = taskDao.getTotalImpressions(startTime)
 
     override fun getTotalUniqueUsers(startTime: Long): Flow<Int> = taskDao.getTotalUniqueUsers(startTime)
+
+    // Users
+    override suspend fun insertUser(user: User) = taskDao.insertUser(user)
+    override suspend fun updateUser(user: User) = taskDao.updateUser(user)
+    override suspend fun getUserByUsername(username: String): User? = taskDao.getUserByUsername(username)
+    override fun getUserById(id: Int): Flow<User?> = taskDao.getUserById(id)
+
+    // Partners
+    override suspend fun insertPartner(partner: Partner) = taskDao.insertPartner(partner)
+    override suspend fun updatePartner(partner: Partner) = taskDao.updatePartner(partner)
+    override suspend fun getPartnerByUsername(username: String): Partner? = taskDao.getPartnerByUsername(username)
+    override fun getPartnerById(id: Int): Flow<Partner?> = taskDao.getPartnerById(id)
 }

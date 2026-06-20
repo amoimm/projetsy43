@@ -1,10 +1,11 @@
 package com.example.application.ui.bdd
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 enum class ActivityCategory {
-    PUSHUP, PULLUP, SQUAT, RUNNING
+    Pushup, Pullup, Squat, Running
 }
 
 enum class Frequency {
@@ -51,7 +52,7 @@ data class ToDoList(
                     categorie = try { 
                         ActivityCategory.valueOf(parts[0].uppercase().replace(" ", "")) 
                     } catch (e: Exception) { 
-                        ActivityCategory.PUSHUP 
+                        ActivityCategory.Pushup
                     },
                     valeur = parts[1],
                     isDone = parts[2].toBoolean(),
@@ -82,4 +83,38 @@ data class Ad(
     val triggerLocation: String, // Comma separated names of AdTriggerLocation
     val triggerValue: String = "",
     val videoUri: String? = null
+)
+
+@Entity(
+    tableName = "users",
+    indices = [Index(value = ["username"], unique = true)]
+)
+data class User(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val username: String,
+    val mdp: String,
+    val name: String = "",
+    val age: String = "",
+    val weight: String = "",
+    val height: String = "",
+    val maxPushups: String = "0",
+    val maxPullups: String = "0",
+    val maxSquats: String = "0",
+    val maxRunningKm: String = "0.0",
+    val lastExerciseDate: Long = 0L,
+    val lastMotivationDate: String = "",
+    val hasCompletedOnboarding: Boolean = false
+)
+
+@Entity(
+    tableName = "partners",
+    indices = [Index(value = ["username"], unique = true)]
+)
+data class Partner(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val username: String,
+    val mdp: String,
+    val lastName: String = "",
+    val firstName: String = "",
+    val company: String = ""
 )

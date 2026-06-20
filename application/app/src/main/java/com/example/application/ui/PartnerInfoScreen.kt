@@ -2,8 +2,9 @@ package com.example.application.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -13,36 +14,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.application.R
-import com.example.application.ui.theme.ApplicationTheme
 
 @Composable
 fun PartnerInfoScreen(
     modifier: Modifier = Modifier,
+    initialUsername: String = "",
+    initialMdp: String = "",
     initialLastName: String = "",
     initialFirstName: String = "",
     initialCompany: String = "",
     onBackClick: () -> Unit = {},
-    onValidateClick: (String, String, String) -> Unit = { _, _, _ -> }
+    onValidateClick: (username: String, mdp: String, lastName: String, firstName: String, company: String) -> Unit = { _, _, _, _, _ -> }
 ) {
-    // Keyed remember ensures fields update when initial data changes (e.g. loaded from memory)
+    var username by remember(initialUsername) { mutableStateOf(initialUsername) }
+    var mdp by remember(initialMdp) { mutableStateOf(initialMdp) }
     var lastName by remember(initialLastName) { mutableStateOf(initialLastName) }
     var firstName by remember(initialFirstName) { mutableStateOf(initialFirstName) }
     var company by remember(initialCompany) { mutableStateOf(initialCompany) }
 
-    // Mandatory fields check
-    val isFormValid = lastName.isNotBlank() && firstName.isNotBlank() && company.isNotBlank()
+    val isFormValid = username.isNotBlank() && mdp.isNotBlank() && lastName.isNotBlank() && firstName.isNotBlank() && company.isNotBlank()
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = 24.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 32.dp, bottom = 100.dp)
+        ) {
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -59,6 +66,23 @@ fun PartnerInfoScreen(
             )
 
             Spacer(modifier = Modifier.height(40.dp))
+
+            PartnerInputField(
+                label = "Username",
+                value = username,
+                onValueChange = { username = it }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            PartnerInputField(
+                label = "Password",
+                value = mdp,
+                onValueChange = { mdp = it },
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             PartnerInputField(
                 label = stringResource(id = R.string.partner_info_lastname),
@@ -84,8 +108,8 @@ fun PartnerInfoScreen(
         }
 
         Button(
-            onClick = { onValidateClick(lastName, firstName, company) },
-            enabled = isFormValid, // Confirm only possible if all fields are filled
+            onClick = { onValidateClick(username, mdp, lastName, firstName, company) },
+            enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black,
@@ -112,7 +136,8 @@ fun PartnerInputField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -137,6 +162,7 @@ fun PartnerInputField(
                 unfocusedIndicatorColor = Color.Transparent
             ),
             shape = RoundedCornerShape(8.dp),
+            visualTransformation = visualTransformation,
             singleLine = true
         )
     }

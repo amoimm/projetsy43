@@ -8,12 +8,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,11 +32,11 @@ import com.example.application.ui.bdd.Frequency
 fun BuildToDoListScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
-    onValidateClick: (ToDoList) -> Unit
+    onSaveClick: (ToDoList) -> Unit
 ) {
     var titleSaisie by remember { mutableStateOf("") }
     var listeActivites by remember { mutableStateOf(listOf<ActiviteSportive>()) }
-    var categorieSelectionnee by remember { mutableStateOf(ActivityCategory.PUSHUP) }
+    var categorieSelectionnee by remember { mutableStateOf(ActivityCategory.Pushup) }
     var valeurSaisie by remember { mutableStateOf("") }
     var compteurId by remember { mutableIntStateOf(0) }
 
@@ -83,7 +81,7 @@ fun BuildToDoListScreen(
         ) {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     tint = Color.White
                 )
@@ -200,10 +198,10 @@ fun BuildToDoListScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 val cats = listOf(
-                                    ActivityCategory.PUSHUP to "Pushup",
-                                    ActivityCategory.PULLUP to "Pullup",
-                                    ActivityCategory.SQUAT to "Squat",
-                                    ActivityCategory.RUNNING to "Running"
+                                    ActivityCategory.Pushup to "Pushup",
+                                    ActivityCategory.Pullup to "Pullup",
+                                    ActivityCategory.Squat to "Squat",
+                                    ActivityCategory.Running to "Running"
                                 )
                                 cats.forEach { (cat, label) ->
                                     Button(
@@ -223,7 +221,7 @@ fun BuildToDoListScreen(
                             OutlinedTextField(
                                 value = valeurSaisie,
                                 onValueChange = { input ->
-                                    if (categorieSelectionnee == ActivityCategory.RUNNING) {
+                                    if (categorieSelectionnee == ActivityCategory.Running) {
                                         if (input.isEmpty() || input.matches(Regex("""^\d*[.,]?\d*$"""))) {
                                             valeurSaisie = input.replace(',', '.')
                                         }
@@ -294,7 +292,7 @@ fun BuildToDoListScreen(
                     val activitiesString = listeActivites.joinToString(";") {
                         "${it.categorie.name},${it.valeur},${it.isDone},${it.progress}"
                     }
-                    onValidateClick(
+                    onSaveClick(
                         ToDoList(
                             title = titleSaisie,
                             date = if (frequency == Frequency.ONCE) dateSelectionnee else "",
@@ -342,7 +340,7 @@ fun ActiviteItem(
                 color = Color.White,
                 modifier = Modifier.weight(1f)
             )
-            val suffixe = if (activite.categorie == ActivityCategory.RUNNING) "km" else "reps"
+            val suffixe = if (activite.categorie == ActivityCategory.Running) "km" else "reps"
             Text(
                 text = "${activite.valeur} $suffixe",
                 fontSize = 18.sp,
