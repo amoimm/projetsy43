@@ -31,6 +31,8 @@ import java.util.Calendar
 import java.util.Locale
 import com.example.application.ui.bdd.ToDoList
 import com.example.application.ui.bdd.ActiviteSportive
+import com.example.application.ui.bdd.Frequency
+import com.example.application.ui.bdd.ActivityCategory
 
 @Composable
 fun ToDoListCard(
@@ -87,12 +89,12 @@ fun ToDoListCard(
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             when(toDoList.frequency) {
-                                "DAILY" -> {
+                                Frequency.DAILY -> {
                                     Badge(containerColor = Color(0xFF1565C0)) {
                                         Text("DAILY", color = Color.White, fontSize = 8.sp)
                                     }
                                 }
-                                "WEEKLY" -> {
+                                Frequency.WEEKLY -> {
                                     val calendar = Calendar.getInstance()
                                     val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH)
                                     val isForToday = toDoList.targetDays == "All week" || toDoList.targetDays == currentDay
@@ -172,9 +174,9 @@ fun ActivityRow(
     activity: ActiviteSportive,
     onPlayClick: () -> Unit
 ) {
-    val suffixe = if (activity.categorie == "Running") "km" else "reps"
+    val suffixe = if (activity.categorie == ActivityCategory.RUNNING) "km" else "reps"
     val progressVal = try {
-        if (activity.categorie == "Running") "%.2f".format(activity.progress.toFloat())
+        if (activity.categorie == ActivityCategory.RUNNING) "%.2f".format(activity.progress.toFloat())
         else activity.progress
     } catch (e: Exception) { "0" }
 
@@ -187,7 +189,7 @@ fun ActivityRow(
     ) {
         Column {
             Text(
-                text = activity.categorie,
+                text = activity.categorie.name,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
             )
@@ -269,7 +271,7 @@ fun MainScreen(
     onSettingsClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
-    val expandedCardIds = remember { mutableStateListOf<Int>() }
+    val expandedCardIds = remember { mutableStateOf(mutableListOf<Int>()) }.value
     
     // Toast state
     var showToast by remember { mutableStateOf(false) }
@@ -288,12 +290,9 @@ fun MainScreen(
     var onceExpanded by remember { mutableStateOf(true) }
 
     // Filter and Group
-    val calendar = Calendar.getInstance()
-    val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH)
-
-    val dailyLists = toDoLists.filter { it.frequency == "DAILY" }.sortedByDescending { it.id }
-    val weeklyLists = toDoLists.filter { it.frequency == "WEEKLY" }.sortedByDescending { it.id }
-    val onceLists = toDoLists.filter { it.frequency == "ONCE" }.sortedBy { it.date }
+    val dailyLists = toDoLists.filter { it.frequency == Frequency.DAILY }.sortedByDescending { it.id }
+    val weeklyLists = toDoLists.filter { it.frequency == Frequency.WEEKLY }.sortedByDescending { it.id }
+    val onceLists = toDoLists.filter { it.frequency == Frequency.ONCE }.sortedBy { it.date }
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -368,7 +367,7 @@ fun MainScreen(
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
 
-                                            val rawCategory = toDoList.activities[activityIndex].categorie
+                                            val rawCategory = toDoList.activities[activityIndex].categorie.name
                                             val cleanCategory = rawCategory.replace(" ", "").lowercase().replaceFirstChar { it.uppercase() }
                                             val screenName = cleanCategory + "Screen"
 
@@ -402,7 +401,7 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-                                            val screenName = toDoList.activities[activityIndex].categorie.replace(" ", "") + "Screen"
+                                            val screenName = toDoList.activities[activityIndex].categorie.name.replace(" ", "") + "Screen"
                                             onValidateClick("$screenName|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
@@ -432,7 +431,7 @@ fun MainScreen(
                                         },
                                         onActivityPlayClick = { activityIndex ->
                                             val originalIndex = toDoLists.indexOf(toDoList)
-                                            onValidateClick("${toDoList.activities[activityIndex].categorie}Screen|$originalIndex|$activityIndex")
+                                            onValidateClick("${toDoList.activities[activityIndex].categorie.name}Screen|$originalIndex|$activityIndex")
                                         },
                                         onDeleteClick = { onDeleteClick(toDoList) },
                                         onShareClick = { onShareClick(toDoList) }

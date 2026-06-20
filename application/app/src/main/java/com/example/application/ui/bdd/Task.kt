@@ -3,9 +3,21 @@ package com.example.application.ui.bdd
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+enum class ActivityCategory {
+    PUSHUP, PULLUP, SQUAT, RUNNING
+}
+
+enum class Frequency {
+    ONCE, DAILY, WEEKLY
+}
+
+enum class AdTriggerLocation {
+    AFTER_LIST, AFTER_TIME, AFTER_PUSHUP, AFTER_RUNNING, AFTER_DELETE
+}
+
 data class ActiviteSportive(
     val id: Int,
-    val categorie: String,
+    val categorie: ActivityCategory,
     val valeur: String,
     var isDone: Boolean = false,
     var progress: String = "0"
@@ -14,7 +26,7 @@ data class ActiviteSportive(
 @Entity(tableName = "tasks")
 data class Task(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val categorie: String,
+    val categorie: ActivityCategory,
     val valeur: String,
     val isDone: Boolean = false,
     val date: String = ""
@@ -26,8 +38,8 @@ data class ToDoList(
     val title: String,
     val date: String,
     val activitiesJson: String,
-    val frequency: String = "ONCE", // "ONCE", "DAILY", "WEEKLY"
-    val targetDays: String = ""      // "Monday,Tuesday..." or "All Week"
+    val frequency: Frequency = Frequency.ONCE,
+    val targetDays: String = ""
 ) {
     val activities: List<ActiviteSportive> get() {
         if (activitiesJson.isBlank()) return emptyList()
@@ -36,7 +48,11 @@ data class ToDoList(
                 val parts = s.split(",")
                 ActiviteSportive(
                     id = index,
-                    categorie = parts[0],
+                    categorie = try { 
+                        ActivityCategory.valueOf(parts[0].uppercase().replace(" ", "")) 
+                    } catch (e: Exception) { 
+                        ActivityCategory.PUSHUP 
+                    },
                     valeur = parts[1],
                     isDone = parts[2].toBoolean(),
                     progress = if (parts.size >= 4) parts[3] else "0"
@@ -63,7 +79,7 @@ data class Ad(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val title: String,
     val content: String,
-    val triggerLocation: String, // "AFTER_LIST", "AFTER_TIME", "AFTER_PUSHUP", "AFTER_RUNNING"
+    val triggerLocation: String, // Comma separated names of AdTriggerLocation
     val triggerValue: String = "",
     val videoUri: String? = null
 )
