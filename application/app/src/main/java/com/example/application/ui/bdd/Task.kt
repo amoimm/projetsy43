@@ -1,6 +1,7 @@
 package com.example.application.ui.bdd
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -13,7 +14,7 @@ enum class Frequency {
 }
 
 enum class AdTriggerLocation {
-    AFTER_LIST, AFTER_TIME, AFTER_PUSHUP, AFTER_RUNNING, AFTER_DELETE
+    AFTER_LIST, AFTER_PUSHUP, AFTER_RUNNING, AFTER_DELETE
 }
 
 data class ActiviteSportive(
@@ -33,9 +34,21 @@ data class Task(
     val date: String = ""
 )
 
-@Entity(tableName = "todo_lists")
+@Entity(
+    tableName = "todo_lists",
+    foreignKeys = [
+        ForeignKey(
+            entity = User::class,
+            parentColumns = ["id"],
+            childColumns = ["userId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("userId")]
+)
 data class ToDoList(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val userId: Int,
     val title: String,
     val date: String,
     val activitiesJson: String,
@@ -67,17 +80,40 @@ data class ToDoList(
     val isCompleted: Boolean get() = activities.isNotEmpty() && activities.all { it.isDone }
 }
 
-@Entity(tableName = "ad_metrics")
+@Entity(
+    tableName = "ad_metrics",
+    foreignKeys = [
+        ForeignKey(
+            entity = User::class,
+            parentColumns = ["id"],
+            childColumns = ["userId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("userId")]
+)
 data class AdMetric(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val adId: Int,
-    val userName: String,
+    val userId: Int,
     val timestamp: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "ads")
+@Entity(
+    tableName = "ads",
+    foreignKeys = [
+        ForeignKey(
+            entity = Partner::class,
+            parentColumns = ["id"],
+            childColumns = ["partnerId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("partnerId")]
+)
 data class Ad(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val partnerId: Int,
     val title: String,
     val content: String,
     val triggerLocation: String, // Comma separated names of AdTriggerLocation
@@ -103,6 +139,7 @@ data class User(
     val maxRunningKm: String = "0.0",
     val lastExerciseDate: Long = 0L,
     val lastMotivationDate: String = "",
+    val lastMotivationLevel: Float = 0.5f,
     val hasCompletedOnboarding: Boolean = false
 )
 

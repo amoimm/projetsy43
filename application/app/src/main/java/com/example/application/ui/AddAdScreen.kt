@@ -27,6 +27,7 @@ import com.example.application.ui.bdd.Ad
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddAdScreen(
+    partnerId: Int,
     onBackClick: () -> Unit,
     onSaveAdClick: (Ad) -> Unit,
     modifier: Modifier = Modifier
@@ -178,6 +179,7 @@ fun AddAdScreen(
                     if (canSave) {
                         onSaveAdClick(
                             Ad(
+                                partnerId = partnerId,
                                 title = title,
                                 content = content,
                                 triggerLocation = selectedLocations.joinToString(","),

@@ -190,18 +190,18 @@ fun PartnerDashboardScreen(
                 Text(text = "MANAGE MY ADS", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
-            Button(
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(
                 onClick = onBackClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(text = "RETURN TO MENU", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "LOGOUT",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

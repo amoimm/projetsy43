@@ -30,8 +30,8 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertToDoList(toDoList: ToDoList)
 
-    @Query("SELECT * FROM todo_lists")
-    fun getAllLists(): Flow<List<ToDoList>>
+    @Query("SELECT * FROM todo_lists WHERE userId = :userId")
+    fun getAllListsForUser(userId: Int): Flow<List<ToDoList>>
 
     @Delete
     suspend fun deleteToDoList(toDoList: ToDoList)
@@ -39,6 +39,9 @@ interface TaskDao {
     // Ads
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAd(ad: Ad)
+
+    @Query("SELECT * FROM ads WHERE partnerId = :partnerId ORDER BY triggerLocation ASC")
+    fun getAdsForPartner(partnerId: Int): Flow<List<Ad>>
 
     @Query("SELECT * FROM ads ORDER BY triggerLocation ASC")
     fun getAllAds(): Flow<List<Ad>>
@@ -53,13 +56,13 @@ interface TaskDao {
     @Query("SELECT COUNT(*) FROM ad_metrics WHERE adId = :adId AND timestamp >= :startTime")
     fun getAdImpressions(adId: Int, startTime: Long): Flow<Int>
 
-    @Query("SELECT COUNT(DISTINCT userName) FROM ad_metrics WHERE adId = :adId AND timestamp >= :startTime")
+    @Query("SELECT COUNT(DISTINCT userId) FROM ad_metrics WHERE adId = :adId AND timestamp >= :startTime")
     fun getAdUniqueUsers(adId: Int, startTime: Long): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM ad_metrics WHERE timestamp >= :startTime")
     fun getTotalImpressions(startTime: Long): Flow<Int>
 
-    @Query("SELECT COUNT(DISTINCT userName) FROM ad_metrics WHERE timestamp >= :startTime")
+    @Query("SELECT COUNT(DISTINCT userId) FROM ad_metrics WHERE timestamp >= :startTime")
     fun getTotalUniqueUsers(startTime: Long): Flow<Int>
 
     // Users

@@ -50,14 +50,6 @@ fun PartnerInfoScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(top = 32.dp, bottom = 100.dp)
         ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
-
             Text(
                 text = stringResource(id = R.string.partner_info_title),
                 color = Color.White,
@@ -87,7 +79,11 @@ fun PartnerInfoScreen(
             PartnerInputField(
                 label = stringResource(id = R.string.partner_info_lastname),
                 value = lastName,
-                onValueChange = { lastName = it }
+                onValueChange = { input ->
+                    if (input.all { it.isLetter() || it.isWhitespace() }) {
+                        lastName = input
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -95,7 +91,11 @@ fun PartnerInfoScreen(
             PartnerInputField(
                 label = stringResource(id = R.string.partner_info_firstname),
                 value = firstName,
-                onValueChange = { firstName = it }
+                onValueChange = { input ->
+                    if (input.all { it.isLetter() || it.isWhitespace() }) {
+                        firstName = input
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))

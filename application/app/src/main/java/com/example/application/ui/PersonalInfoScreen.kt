@@ -92,8 +92,8 @@ fun PersonalInfoScreen(
                 label = stringResource(id = R.string.personal_info_name),
                 value = name,
                 onValueChange = { input ->
-                    // Empêcher les chiffres et les virgules
-                    if (!input.any { it.isDigit() || it == ',' }) {
+                    // Autoriser seulement lettres et espaces
+                    if (input.all { it.isLetter() || it.isWhitespace() }) {
                         name = input
                     }
                 }

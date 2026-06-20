@@ -32,6 +32,7 @@ import com.example.application.ui.bdd.Frequency
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuildToDoListScreen(
+    userId: Int,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onSaveClick: (ToDoList) -> Unit
@@ -296,6 +297,7 @@ fun BuildToDoListScreen(
                     }
                     onSaveClick(
                         ToDoList(
+                            userId = userId,
                             title = titleSaisie,
                             date = if (frequency == Frequency.ONCE) dateSelectionnee else "",
                             activitiesJson = activitiesString,

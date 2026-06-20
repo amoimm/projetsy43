@@ -17,13 +17,15 @@ class OfflineTaskRepository(private val taskDao: TaskDao) : TaskRepository {
 
     override suspend fun deleteAllTasks() = taskDao.deleteAllTasks()
 
-    override val allToDoLists: Flow<List<ToDoList>> = taskDao.getAllLists()
+    override fun getAllListsForUser(userId: Int): Flow<List<ToDoList>> = taskDao.getAllListsForUser(userId)
 
     override suspend fun insertToDoList(list: ToDoList) = taskDao.insertToDoList(list)
 
     override suspend fun deleteToDoList(list: ToDoList) = taskDao.deleteToDoList(list)
 
     // Ads
+    override fun getAdsForPartner(partnerId: Int): Flow<List<Ad>> = taskDao.getAdsForPartner(partnerId)
+
     override val allAds: Flow<List<Ad>> = taskDao.getAllAds()
     
     override suspend fun insertAd(ad: Ad) = taskDao.insertAd(ad)

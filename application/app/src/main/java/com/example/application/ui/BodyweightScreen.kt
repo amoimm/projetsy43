@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -44,14 +45,14 @@ fun BodyweightScreen(
     threshold: Float = 0.25f,
     onContinueClick: (Int) -> Unit = {}
 ) {
-    var count by remember { mutableIntStateOf(initialCount) }
+    var count by rememberSaveable { mutableIntStateOf(initialCount) }
     var fontChange by remember(count) { mutableStateOf(120.sp) }
 
-    var workoutState by remember { mutableStateOf(WorkoutState.COUNTDOWN) }
-    var countdownValue by remember { mutableStateOf("5") }
+    var workoutState by rememberSaveable { mutableStateOf(WorkoutState.COUNTDOWN) }
+    var countdownValue by rememberSaveable { mutableStateOf("5") }
 
-    var isCelebrating by remember { mutableStateOf(false) }
-    var hasCelebrated by remember { mutableStateOf(false) }
+    var isCelebrating by rememberSaveable { mutableStateOf(false) }
+    var hasCelebrated by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -74,6 +75,7 @@ fun BodyweightScreen(
     }
 
     LaunchedEffect(Unit) {
+        if (workoutState != WorkoutState.COUNTDOWN) return@LaunchedEffect
         val playSound = { resId: Int ->
             try { MediaPlayer.create(context, resId)?.start() } catch (e: Exception) { e.printStackTrace() }
         }
@@ -98,6 +100,7 @@ fun BodyweightScreen(
         var wentDown = false
         var isNearGround = false
         val gravityValues = FloatArray(3) { 0f }
+        var gravityInitialized = false
         val alpha = 0.8f
 
         val sensorListener = object : SensorEventListener {
@@ -108,6 +111,13 @@ fun BodyweightScreen(
                 val upThreshold = 28f * threshold
 
                 if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) { // take care of gravity
+                    if (!gravityInitialized) {
+                        gravityValues[0] = event.values[0]
+                        gravityValues[1] = event.values[1]
+                        gravityValues[2] = event.values[2]
+                        gravityInitialized = true
+                        return
+                    }
                     gravityValues[0] = alpha * gravityValues[0] + (1 - alpha) * event.values[0]
                     gravityValues[1] = alpha * gravityValues[1] + (1 - alpha) * event.values[1]
                     gravityValues[2] = alpha * gravityValues[2] + (1 - alpha) * event.values[2]

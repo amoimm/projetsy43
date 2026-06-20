@@ -108,8 +108,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                val toDoLists by taskViewModel.allToDoLists.observeAsState(initial = emptyList())
-                val ads by taskViewModel.allAds.observeAsState(initial = emptyList())
+                val toDoLists by (currentUser?.let { taskViewModel.getAllToDoListsForUser(it.id) } ?: taskViewModel.getAllToDoListsForUser(-1)).observeAsState(initial = emptyList())
+                val ads by (currentPartner?.let { taskViewModel.getAdsForPartner(it.id) } ?: taskViewModel.allAds).observeAsState(initial = emptyList())
+                val allAdsForUsers by taskViewModel.allAds.observeAsState(initial = emptyList())
                 var activeListIndex by remember { mutableStateOf<Int?>(null) }
                 var activeActivityIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -127,7 +128,7 @@ class MainActivity : ComponentActivity() {
                 var nextScreenAfterAd by remember { mutableStateOf("Main") }
 
                 fun triggerAd(location: AdTriggerLocation, nextScreen: String) {
-                    val possibleAds = ads.filter { it.triggerLocation.split(",").contains(location.name) }
+                    val possibleAds = allAdsForUsers.filter { it.triggerLocation.split(",").contains(location.name) }
                     if (possibleAds.isNotEmpty()) {
                         adToShow = possibleAds[Random.nextInt(possibleAds.size)]
                         nextScreenAfterAd = nextScreen
@@ -242,7 +243,12 @@ class MainActivity : ComponentActivity() {
                                         age = a,
                                         weight = w,
                                         height = h,
-                                        lastMotivationDate = currentUser?.lastMotivationDate ?: ""
+                                        maxPushups = currentUser?.maxPushups ?: "0",
+                                        maxPullups = currentUser?.maxPullups ?: "0",
+                                        maxSquats = currentUser?.maxSquats ?: "0",
+                                        maxRunningKm = currentUser?.maxRunningKm ?: "0.0",
+                                        lastMotivationDate = currentUser?.lastMotivationDate ?: "",
+                                        lastMotivationLevel = currentUser?.lastMotivationLevel ?: 0.5f
                                     )
                                     if (currentUser == null) {
                                         taskViewModel.registerUser(newUser) {
@@ -280,7 +286,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     } else {
                                         taskViewModel.updateCurrentPartner(newPartner)
-                                        currentScreen = "settings_choice"
+                                        currentScreen = "partner_dashboard"
                                     }
                                 }
                             )
@@ -313,7 +319,10 @@ class MainActivity : ComponentActivity() {
                                 onValidateClick = { generatedList, level ->
                                     currentUser?.let { user ->
                                         val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-                                        taskViewModel.updateCurrentUser(user.copy(lastMotivationDate = today))
+                                        taskViewModel.updateCurrentUser(user.copy(
+                                            lastMotivationDate = today,
+                                            lastMotivationLevel = level
+                                        ))
                                         taskViewModel.insertToDoList(generatedList)
                                     }
                                     currentScreen = "Main"
@@ -416,6 +425,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             "Build_ToDo_List" -> BuildToDoListScreen(
+                                userId = currentUser?.id ?: 0,
                                 modifier = Modifier.padding(innerPadding),
                                 onBackClick = { currentScreen = "Main" },
                                 onSaveClick = { newList ->
@@ -442,7 +452,10 @@ class MainActivity : ComponentActivity() {
                                 adSpecificUniqueUsers = adUniqueUsers,
                                 onPeriodChange = { dashboardStartTime = it },
                                 onAdSelectionChange = { dashboardAdId = it },
-                                onBackClick = { currentScreen = "mode_selection" },
+                                onBackClick = { 
+                                    taskViewModel.logout()
+                                    currentScreen = "mode_selection" 
+                                },
                                 onSettingsClick = { currentScreen = "partner_info" },
                                 onMyAdsClick = { currentScreen = "my_ads" }
                             )
@@ -459,6 +472,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             "add_ad" -> AddAdScreen(
+                                partnerId = currentPartner?.id ?: 0,
                                 onBackClick = { currentScreen = "my_ads" },
                                 onSaveAdClick = { ad ->
                                     taskViewModel.insertAd(ad)
@@ -471,7 +485,7 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.padding(innerPadding),
                                         ad = ad,
                                         onAdFinished = {
-                                            taskViewModel.insertAdMetric(AdMetric(adId = ad.id, userName = currentUser?.name ?: "Guest", timestamp = System.currentTimeMillis()))
+                                            taskViewModel.insertAdMetric(AdMetric(adId = ad.id, userId = currentUser?.id ?: 0, timestamp = System.currentTimeMillis()))
                                             currentScreen = nextScreenAfterAd
                                         }
                                     )

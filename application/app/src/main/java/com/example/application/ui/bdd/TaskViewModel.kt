@@ -43,7 +43,7 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
         }
     }
 
-    val allToDoLists = taskRepository.allToDoLists.asLiveData()
+    fun getAllToDoListsForUser(userId: Int) = taskRepository.getAllListsForUser(userId).asLiveData()
 
     fun insertToDoList(list: ToDoList) = viewModelScope.launch {
         taskRepository.insertToDoList(list)
@@ -54,6 +54,7 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
     }
 
     // Ads logic
+    fun getAdsForPartner(partnerId: Int) = taskRepository.getAdsForPartner(partnerId).asLiveData()
     val allAds = taskRepository.allAds.asLiveData()
 
     fun insertAd(ad: Ad) = viewModelScope.launch {

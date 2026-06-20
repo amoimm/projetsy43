@@ -28,7 +28,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-fun generateTodolist(motivation: Float, maxpushups: Int, maxpullups: Int, maxsquats: Int, maxkm: Double): ToDoList {
+fun generateTodolist(userId: Int, motivation: Float, maxpushups: Int, maxpullups: Int, maxsquats: Int, maxkm: Double): ToDoList {
     val ratio = 0.3f + (motivation * 0.7f)
 
     val pushupGoal = (maxpushups * ratio).toInt().coerceAtLeast(5)
@@ -45,6 +45,7 @@ fun generateTodolist(motivation: Float, maxpushups: Int, maxpullups: Int, maxsqu
     val activities = "PUSHUP,$pushupGoal,false;PULLUP,$pullupGoal,false;SQUAT,$squatGoal,false;RUNNING,$runningGoal,false"
 
     return ToDoList(
+        userId = userId,
         title = title,
         date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
         activitiesJson = activities
@@ -57,7 +58,9 @@ fun HowYouFeelScreen(
     user: User?,
     onValidateClick: (ToDoList, Float) -> Unit
 ) {
-    var fillPercentage by remember { mutableStateOf(0.5f) }
+    var fillPercentage by remember(user?.lastMotivationLevel) { 
+        mutableStateOf(user?.lastMotivationLevel ?: 0.5f) 
+    }
 
     Box(
         modifier = modifier
@@ -165,7 +168,7 @@ fun HowYouFeelScreen(
                 val maxS = user?.maxSquats?.toIntOrNull() ?: 20
                 val maxK = user?.maxRunningKm?.toDoubleOrNull() ?: 3.0
 
-                val autoList = generateTodolist(fillPercentage, maxPush, maxPull, maxS, maxK)
+                val autoList = generateTodolist(user?.id ?: 0, fillPercentage, maxPush, maxPull, maxS, maxK)
 
                 onValidateClick(autoList, fillPercentage)
             },
